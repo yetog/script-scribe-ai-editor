@@ -1,12 +1,38 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState } from 'react';
+import ProjectSidebar from '@/components/ProjectSidebar';
+import EditorPanel from '@/components/EditorPanel';
+import SettingsPanel from '@/components/SettingsPanel';
 
 const Index = () => {
+  const [dyslexicMode, setDyslexicMode] = useState<boolean>(false);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen flex flex-col bg-black text-white">
+      <header className="bg-black border-b border-scriptRed/20 p-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <span className="text-scriptRed text-xl font-bold">Script</span>
+            <span className="text-scriptGold text-xl font-bold">Voice</span>
+          </div>
+          <div className="text-sm text-gray-400">
+            TTS Script Editor
+          </div>
+        </div>
+      </header>
+      
+      <main className="flex-1 flex">
+        <ProjectSidebar />
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 p-4">
+            <EditorPanel dyslexicMode={dyslexicMode} />
+          </div>
+          <SettingsPanel 
+            dyslexicMode={dyslexicMode} 
+            setDyslexicMode={setDyslexicMode} 
+          />
+        </div>
+      </main>
     </div>
   );
 };
