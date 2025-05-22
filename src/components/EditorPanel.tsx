@@ -2,8 +2,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Play, Pause, Save, Upload, FileText, Book, Volume2 } from "lucide-react";
+import { Play, Pause, Save, Upload, FileText, Book, Volume2, Image, FileAudio, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { createWorker } from 'tesseract.js';
+import { VoiceSelector } from "@/components/VoiceSelector";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface EditorPanelProps {
   dyslexicMode: boolean;
@@ -15,9 +18,13 @@ const EditorPanel = ({ dyslexicMode }: EditorPanelProps) => {
   const [currentWordIndex, setCurrentWordIndex] = useState<number>(-1);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
   const [volume, setVolume] = useState<number>(1);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState<boolean>(false);
   const wordsRef = useRef<string[]>([]);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -32,6 +39,31 @@ const EditorPanel = ({ dyslexicMode }: EditorPanelProps) => {
       startPlayback();
     }
   };
+
+  // Load available voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        setAvailableVoices(voices);
+        // Set default voice
+        setSelectedVoice(voices[0]);
+      }
+    };
+    
+    loadVoices();
+    
+    // Chrome loads voices asynchronously
+    if ('onvoiceschanged' in window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+    
+    return () => {
+      if ('onvoiceschanged' in window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
 
   const startPlayback = () => {
     // Check if browser supports speech synthesis
@@ -54,6 +86,11 @@ const EditorPanel = ({ dyslexicMode }: EditorPanelProps) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = playbackRate;
     utterance.volume = volume;
+    
+    // Set the selected voice if available
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    }
     
     // Store the utterance reference
     speechSynthRef.current = utterance;
@@ -103,6 +140,88 @@ const EditorPanel = ({ dyslexicMode }: EditorPanelProps) => {
     }
   };
 
+  // OCR functionality
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setIsProcessingImage(true);
+    toast({
+      title: "Processing image",
+      description: "Reading text from image...",
+    });
+    
+    try {
+      const worker = await createWorker();
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
+      const { data } = await worker.recognize(file);
+      await worker.terminate();
+      
+      // Update the text area with OCR results
+      setText(data.text);
+      wordsRef.current = data.text.split(/\s+/);
+      
+      toast({
+        title: "OCR complete",
+        description: "Text extracted from image successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "OCR failed",
+        description: "Failed to extract text from image.",
+        variant: "destructive",
+      });
+      console.error("OCR error:", error);
+    } finally {
+      setIsProcessingImage(false);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Export audio function
+  const handleExportAudio = () => {
+    // Since Web Speech API doesn't provide direct export,
+    // inform the user this is a simulation
+    toast({
+      title: "Exporting audio",
+      description: "Preparing audio export...",
+    });
+    
+    // Create a simple text file to simulate export
+    const element = document.createElement('a');
+    const file = new Blob([text], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = 'script-export.txt';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    
+    toast({
+      title: "Export complete",
+      description: "Script exported as text file. Audio export simulation complete.",
+    });
+  };
+
+  // Export text function
+  const handleExportText = () => {
+    const element = document.createElement('a');
+    const file = new Blob([text], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = 'script.txt';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    
+    toast({
+      title: "Export complete",
+      description: "Script exported as text file.",
+    });
+  };
+
   // Clean up on component unmount
   useEffect(() => {
     return () => {
@@ -126,7 +245,7 @@ const EditorPanel = ({ dyslexicMode }: EditorPanelProps) => {
         startPlayback();
       }, 100);
     }
-  }, [playbackRate, volume]);
+  }, [playbackRate, volume, selectedVoice]);
 
   // Initialize words on component mount
   useEffect(() => {
@@ -146,15 +265,6 @@ const EditorPanel = ({ dyslexicMode }: EditorPanelProps) => {
         {word}{' '}
       </span>
     ));
-  };
-
-  // Function to export audio (this is just a placeholder since we can't actually
-  // download audio directly from the Web Speech API)
-  const handleExportAudio = () => {
-    toast({
-      title: "Export Feature",
-      description: "This would export your script as audio. The Web Speech API doesn't support direct export, but this is where you'd integrate a recording solution.",
-    });
   };
 
   return (
@@ -187,20 +297,64 @@ const EditorPanel = ({ dyslexicMode }: EditorPanelProps) => {
             >
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </Button>
+            
+            {/* Voice selection */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className="border-scriptRed/50 text-white"
+                >
+                  <Volume2 className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="bg-gray-900 border-scriptRed/20">
+                <VoiceSelector
+                  availableVoices={availableVoices}
+                  selectedVoice={selectedVoice}
+                  onVoiceSelect={setSelectedVoice}
+                />
+              </SheetContent>
+            </Sheet>
+            
+            {/* OCR button */}
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="border-scriptRed/50 text-white"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isProcessingImage}
+            >
+              <Image className="h-4 w-4" />
+            </Button>
+            <input 
+              type="file" 
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              style={{ display: 'none' }}
+            />
+            
+            {/* Export options */}
+            <div className="relative">
+              <Button 
+                variant="outline" 
+                size="icon"
+                className="border-scriptRed/50 text-white"
+                onClick={handleExportText}
+              >
+                <FileText className="h-4 w-4" />
+              </Button>
+            </div>
+            
             <Button 
               variant="outline"
               size="icon" 
               className="border-scriptRed/50 text-white"
               onClick={handleExportAudio}
             >
-              <Save className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="border-scriptRed/50 text-white"
-            >
-              <Upload className="h-4 w-4" />
+              <FileAudio className="h-4 w-4" />
             </Button>
           </div>
           
