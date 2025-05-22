@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import ProjectSidebar from '@/components/ProjectSidebar';
 import EditorPanel from '@/components/EditorPanel';
-import SettingsPanel from '@/components/SettingsPanel';
 
 const Index = () => {
   const [dyslexicMode, setDyslexicMode] = useState<boolean>(false);
@@ -22,15 +21,14 @@ const Index = () => {
       </header>
       
       <main className="flex-1 flex">
-        <ProjectSidebar />
+        <ProjectSidebar 
+          dyslexicMode={dyslexicMode} 
+          setDyslexicMode={setDyslexicMode} 
+        />
         <div className="flex-1 flex flex-col">
           <div className="flex-1 p-4">
             <EditorPanel dyslexicMode={dyslexicMode} />
           </div>
-          <SettingsPanel 
-            dyslexicMode={dyslexicMode} 
-            setDyslexicMode={setDyslexicMode} 
-          />
         </div>
       </main>
     </div>
