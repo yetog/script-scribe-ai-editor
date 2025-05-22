@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { createWorker } from 'tesseract.js';
 import { VoiceSelector } from "@/components/VoiceSelector";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 interface EditorPanelProps {
   dyslexicMode: boolean;
@@ -268,76 +269,83 @@ const EditorPanel = ({ dyslexicMode }: EditorPanelProps) => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex-1 relative">
-        {isPlaying ? (
-          <div 
-            className={`editor-container h-full w-full p-4 overflow-y-auto text-white ${dyslexicMode ? 'font-dyslexic' : 'font-inter'}`}
-          >
-            {renderText()}
-          </div>
-        ) : (
-          <textarea
-            className={`editor-container h-full w-full p-4 bg-black text-white resize-none outline-none border-none ${dyslexicMode ? 'font-dyslexic' : 'font-inter'}`}
-            value={text}
-            onChange={handleTextChange}
-            placeholder="Enter your script here..."
-          />
-        )}
-      </div>
-      
-      <div className="flex flex-col space-y-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex space-x-2">
-            <Button 
-              onClick={togglePlayback}
-              variant="default"
-              size="icon"
-              className="bg-scriptRed hover:bg-scriptRed/80"
+    <ResizablePanelGroup
+      direction="vertical"
+      className="h-full w-full rounded-lg border border-scriptRed/20"
+    >
+      <ResizablePanel defaultSize={80} minSize={30}>
+        <div className="h-full">
+          {isPlaying ? (
+            <div 
+              className={`editor-container h-full w-full p-4 overflow-y-auto text-white ${dyslexicMode ? 'font-dyslexic' : 'font-inter'}`}
             >
-              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </Button>
-            
-            {/* Voice selection */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  className="border-scriptRed/50 text-white"
-                >
-                  <Volume2 className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="bg-gray-900 border-scriptRed/20">
-                <VoiceSelector
-                  availableVoices={availableVoices}
-                  selectedVoice={selectedVoice}
-                  onVoiceSelect={setSelectedVoice}
-                />
-              </SheetContent>
-            </Sheet>
-            
-            {/* OCR button */}
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="border-scriptRed/50 text-white"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isProcessingImage}
-            >
-              <Image className="h-4 w-4" />
-            </Button>
-            <input 
-              type="file" 
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              style={{ display: 'none' }}
+              {renderText()}
+            </div>
+          ) : (
+            <textarea
+              className={`editor-container h-full w-full p-4 bg-black text-white resize-none outline-none border-none ${dyslexicMode ? 'font-dyslexic' : 'font-inter'}`}
+              value={text}
+              onChange={handleTextChange}
+              placeholder="Enter your script here..."
             />
-            
-            {/* Export options */}
-            <div className="relative">
+          )}
+        </div>
+      </ResizablePanel>
+      
+      <ResizableHandle withHandle className="bg-scriptRed/20 border-y border-scriptRed/30" />
+      
+      <ResizablePanel defaultSize={20} minSize={15}>
+        <div className="flex flex-col space-y-3 p-3 h-full">
+          <div className="flex items-center justify-between">
+            <div className="flex space-x-2">
+              <Button 
+                onClick={togglePlayback}
+                variant="default"
+                size="icon"
+                className="bg-scriptRed hover:bg-scriptRed/80"
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </Button>
+              
+              {/* Voice selection */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="border-scriptRed/50 text-white"
+                  >
+                    <Volume2 className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="bg-gray-900 border-scriptRed/20">
+                  <VoiceSelector
+                    availableVoices={availableVoices}
+                    selectedVoice={selectedVoice}
+                    onVoiceSelect={setSelectedVoice}
+                  />
+                </SheetContent>
+              </Sheet>
+              
+              {/* OCR button */}
+              <Button 
+                variant="outline" 
+                size="icon"
+                className="border-scriptRed/50 text-white"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessingImage}
+              >
+                <Image className="h-4 w-4" />
+              </Button>
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                accept="image/*"
+                style={{ display: 'none' }}
+              />
+              
+              {/* Export options */}
               <Button 
                 variant="outline" 
                 size="icon"
@@ -346,53 +354,53 @@ const EditorPanel = ({ dyslexicMode }: EditorPanelProps) => {
               >
                 <FileText className="h-4 w-4" />
               </Button>
+              
+              <Button 
+                variant="outline"
+                size="icon" 
+                className="border-scriptRed/50 text-white"
+                onClick={handleExportAudio}
+              >
+                <FileAudio className="h-4 w-4" />
+              </Button>
             </div>
             
-            <Button 
-              variant="outline"
-              size="icon" 
-              className="border-scriptRed/50 text-white"
-              onClick={handleExportAudio}
-            >
-              <FileAudio className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center space-x-2">
+              <FileText className="h-4 w-4 text-scriptRed" />
+              <span className="text-sm text-white">Words: {wordsRef.current.length}</span>
+            </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <FileText className="h-4 w-4 text-scriptRed" />
-            <span className="text-sm text-white">Words: {wordsRef.current.length}</span>
+          <div className="flex items-center space-x-4">
+            <Book className="h-4 w-4 text-scriptRed" />
+            <span className="text-sm text-white">Speed:</span>
+            <Slider
+              value={[playbackRate]}
+              min={0.5}
+              max={2}
+              step={0.1}
+              onValueChange={(values) => setPlaybackRate(values[0])}
+              className="w-32"
+            />
+            <span className="text-sm text-white">{playbackRate.toFixed(1)}x</span>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <Volume2 className="h-4 w-4 text-scriptRed" />
+            <span className="text-sm text-white">Volume:</span>
+            <Slider
+              value={[volume]}
+              min={0}
+              max={1}
+              step={0.1}
+              onValueChange={(values) => setVolume(values[0])}
+              className="w-32"
+            />
+            <span className="text-sm text-white">{Math.round(volume * 100)}%</span>
           </div>
         </div>
-        
-        <div className="flex items-center space-x-4">
-          <Book className="h-4 w-4 text-scriptRed" />
-          <span className="text-sm text-white">Speed:</span>
-          <Slider
-            value={[playbackRate]}
-            min={0.5}
-            max={2}
-            step={0.1}
-            onValueChange={(values) => setPlaybackRate(values[0])}
-            className="w-32"
-          />
-          <span className="text-sm text-white">{playbackRate.toFixed(1)}x</span>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <Volume2 className="h-4 w-4 text-scriptRed" />
-          <span className="text-sm text-white">Volume:</span>
-          <Slider
-            value={[volume]}
-            min={0}
-            max={1}
-            step={0.1}
-            onValueChange={(values) => setVolume(values[0])}
-            className="w-32"
-          />
-          <span className="text-sm text-white">{Math.round(volume * 100)}%</span>
-        </div>
-      </div>
-    </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 };
 
