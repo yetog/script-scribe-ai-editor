@@ -3,71 +3,96 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-
-    --card: 0 0% 0%;
-    --card-foreground: 0 0% 100%;
-
-    --popover: 0 0% 3%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 354 80% 56%; /* Red */
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 240 5.9% 10%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 240 4.8% 15%;
-    --muted-foreground: 240 5% 65%;
-
-    --accent: 48 100% 50%; /* Gold */
-    --accent-foreground: 0 0% 0%;
-
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 240 4.9% 20%;
-    --input: 240 4.9% 15%;
-    --ring: 354 80% 56%;
-
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+    
+    /* Script Voice colors */
+    --script-red: 357 81% 56%;
+    --script-gold: 51 100% 50%;
   }
-
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.5% 48%;
+  }
+}
+ 
+@layer base {
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground font-inter antialiased;
-  }
-
-  /* Dyslexia-friendly font styles */
-  .font-dyslexic {
-    font-family: 'OpenDyslexic', serif;
-    letter-spacing: 0.05em;
-    line-height: 1.5;
+    @apply bg-background text-foreground;
   }
 }
 
-@layer components {
-  .editor-container {
-    @apply w-full h-[calc(100vh-8rem)] bg-black text-white p-8 rounded-lg focus:outline-none border border-scriptRed/20;
+/* Editor styles */
+.editor-container {
+  background-color: #000000;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+
+/* Highlight animation for current word */
+.highlighted-word, .text-scriptGold {
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+  background-size: 200% 100%;
+  animation: shine 1s ease-in-out infinite;
+}
+
+@keyframes shine {
+  0% {
+    background-position: 100% 50%;
   }
-  
-  .highlighted-word {
-    @apply bg-scriptRed/30 px-1 rounded text-white;
+  100% {
+    background-position: 0% 50%;
   }
-  
-  .control-button {
-    @apply bg-scriptRed text-white py-2 px-4 rounded-md hover:bg-scriptRed/80 transition-colors;
-  }
-  
-  .slider-control {
-    @apply accent-scriptRed h-2 rounded-lg bg-gray-700 appearance-none cursor-pointer;
-  }
+}
+
+/* Dyslexic font */
+.font-dyslexic {
+  font-family: 'OpenDyslexic', sans-serif;
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
 }
