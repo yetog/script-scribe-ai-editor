@@ -581,6 +581,9 @@ def create_interface():
 
 
 if __name__ == "__main__":
+    print("🚀 Starting ScriptVoice - AI-Powered Story Intelligence Platform")
+    print("🌐 The app will be available at: http://localhost:7860")
+    
     # Create and launch the app
     app = create_interface()
     app.launch(
