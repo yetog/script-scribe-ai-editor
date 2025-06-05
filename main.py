@@ -1,5 +1,5 @@
 
-"""Main application entry point for ScriptVoice."""
+"""Main application entry point for ScriptVoice - Pure Gradio Application."""
 
 import gradio as gr
 from models import (
@@ -147,9 +147,7 @@ def create_story_intelligence_interface():
     }
 
 
-# ... keep existing code (display_stories, display_characters, display_world_elements, perform_search functions)
-
-def query_knowledge_assistant(query: str) -> tuple[str, Any]:
+def query_knowledge_assistant(query: str) -> tuple[str, any]:
     """Process knowledge assistant queries."""
     if not query.strip():
         return "Please enter a query.", gr.update(visible=False)
@@ -163,7 +161,7 @@ def query_knowledge_assistant(query: str) -> tuple[str, Any]:
         return error_response, gr.update(visible=True)
 
 
-def analyze_consistency(text: str) -> tuple[str, Any]:
+def analyze_consistency(text: str) -> tuple[str, any]:
     """Analyze character consistency."""
     if not text.strip():
         return "Please provide text to analyze.", gr.update(visible=False)
@@ -173,7 +171,7 @@ def analyze_consistency(text: str) -> tuple[str, Any]:
     return formatted_response, gr.update(visible=True)
 
 
-def suggest_elements(text: str) -> tuple[str, Any]:
+def suggest_elements(text: str) -> tuple[str, any]:
     """Suggest story elements."""
     if not text.strip():
         return "Please provide text for suggestions.", gr.update(visible=False)
@@ -183,7 +181,7 @@ def suggest_elements(text: str) -> tuple[str, Any]:
     return formatted_response, gr.update(visible=True)
 
 
-def enhance_with_context(text: str, enhancement_type: str) -> tuple[str, Any]:
+def enhance_with_context(text: str, enhancement_type: str) -> tuple[str, any]:
     """Enhance text with context awareness."""
     if not text.strip():
         return "Please provide text to enhance.", gr.update(visible=False)
@@ -193,7 +191,7 @@ def enhance_with_context(text: str, enhancement_type: str) -> tuple[str, Any]:
     return formatted_response, gr.update(visible=True)
 
 
-def rebuild_knowledge_index() -> tuple[str, Any]:
+def rebuild_knowledge_index() -> tuple[str, any]:
     """Rebuild the knowledge base index."""
     try:
         from rag_services import rag_service
@@ -411,44 +409,6 @@ def create_interface():
         
         # Event Handlers for Scripts Tab
         
-        # ... keep existing code (create project, load project, update word count, save script content, generate TTS, OCR, AI enhancement, export functionality)
-        
-        # Event Handlers for Story Intelligence Tab
-        
-        # Knowledge Assistant
-        story_components['assistant_btn'].click(
-            fn=query_knowledge_assistant,
-            inputs=[story_components['assistant_query']],
-            outputs=[story_components['assistant_response'], story_components['assistant_response']]
-        )
-        
-        # AI Analysis Tools
-        story_components['consistency_btn'].click(
-            fn=analyze_consistency,
-            inputs=[story_components['ai_analysis_text']],
-            outputs=[story_components['ai_analysis_output'], story_components['ai_analysis_output']]
-        )
-        
-        story_components['suggest_btn'].click(
-            fn=suggest_elements,
-            inputs=[story_components['ai_analysis_text']],
-            outputs=[story_components['ai_analysis_output'], story_components['ai_analysis_output']]
-        )
-        
-        story_components['context_enhance_btn'].click(
-            fn=enhance_with_context,
-            inputs=[story_components['ai_analysis_text'], story_components['context_enhancement_type']],
-            outputs=[story_components['ai_analysis_output'], story_components['ai_analysis_output']]
-        )
-        
-        # Knowledge Base Management
-        story_components['rebuild_btn'].click(
-            fn=rebuild_knowledge_index,
-            outputs=[story_components['rebuild_status'], story_components['rebuild_status']]
-        )
-        
-        # ... keep existing code (create story, create character, create world element, search functionality)
-        
         # Create new project
         create_btn.click(
             fn=create_new_project,
@@ -521,6 +481,40 @@ def create_interface():
         ).then(
             lambda: gr.update(visible=True),
             outputs=[export_status]
+        )
+        
+        # Event Handlers for Story Intelligence Tab
+        
+        # Knowledge Assistant
+        story_components['assistant_btn'].click(
+            fn=query_knowledge_assistant,
+            inputs=[story_components['assistant_query']],
+            outputs=[story_components['assistant_response'], story_components['assistant_response']]
+        )
+        
+        # AI Analysis Tools
+        story_components['consistency_btn'].click(
+            fn=analyze_consistency,
+            inputs=[story_components['ai_analysis_text']],
+            outputs=[story_components['ai_analysis_output'], story_components['ai_analysis_output']]
+        )
+        
+        story_components['suggest_btn'].click(
+            fn=suggest_elements,
+            inputs=[story_components['ai_analysis_text']],
+            outputs=[story_components['ai_analysis_output'], story_components['ai_analysis_output']]
+        )
+        
+        story_components['context_enhance_btn'].click(
+            fn=enhance_with_context,
+            inputs=[story_components['ai_analysis_text'], story_components['context_enhancement_type']],
+            outputs=[story_components['ai_analysis_output'], story_components['ai_analysis_output']]
+        )
+        
+        # Knowledge Base Management
+        story_components['rebuild_btn'].click(
+            fn=rebuild_knowledge_index,
+            outputs=[story_components['rebuild_status'], story_components['rebuild_status']]
         )
         
         # Create story
