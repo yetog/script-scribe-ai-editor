@@ -12,8 +12,12 @@ from models import (
 from ui_components import CUSTOM_CSS, get_header_html, get_section_header
 from audio_services import generate_tts
 from image_services import extract_text_from_image
-from enhancement_services import enhance_script_placeholder
+from enhancement_services import (
+    enhance_script_placeholder, enhance_script_with_context,
+    analyze_character_consistency, suggest_story_elements
+)
 from export_services import export_project
+from knowledge_assistant import knowledge_assistant
 
 
 # Global state for current project
@@ -24,6 +28,37 @@ def create_story_intelligence_interface():
     """Create the story intelligence interface components."""
     
     with gr.Column():
+        # Knowledge Assistant
+        gr.HTML(get_section_header('🤖 Knowledge Assistant'))
+        with gr.Group():
+            assistant_query = gr.Textbox(
+                label="Ask your Knowledge Assistant", 
+                placeholder="Try: !search dragons, !characters, !stories, or ask any question about your stories...",
+                lines=2
+            )
+            assistant_btn = gr.Button("🔍 Query Assistant", elem_classes=["primary-button"])
+            assistant_response = gr.HTML(visible=False)
+        
+        # Enhanced AI Tools
+        gr.HTML(get_section_header('🎯 Context-Aware AI Tools'))
+        with gr.Group():
+            ai_analysis_text = gr.Textbox(
+                label="Text to Analyze", 
+                placeholder="Paste your script text here for context-aware analysis...",
+                lines=4
+            )
+            with gr.Row():
+                consistency_btn = gr.Button("✅ Check Character Consistency", elem_classes=["secondary-button"])
+                suggest_btn = gr.Button("💡 Suggest Story Elements", elem_classes=["secondary-button"])
+                context_enhance_btn = gr.Button("🎭 Context-Aware Enhancement", elem_classes=["primary-button"])
+            
+            context_enhancement_type = gr.Dropdown(
+                choices=["character_consistent", "plot_coherent", "dramatic", "romantic"],
+                label="Enhancement Type",
+                value="character_consistent"
+            )
+            ai_analysis_output = gr.HTML(visible=False)
+        
         # Search functionality
         gr.HTML(get_section_header('🔍 Search Knowledge Base'))
         with gr.Row():
@@ -68,8 +103,23 @@ def create_story_intelligence_interface():
         
         world_dropdown = gr.Dropdown(label="Select World Element", choices=[])
         world_display = gr.HTML()
+        
+        # Knowledge Base Management
+        gr.HTML(get_section_header('⚙️ Knowledge Base Management'))
+        with gr.Group():
+            rebuild_btn = gr.Button("🔄 Rebuild Knowledge Index", elem_classes=["secondary-button"])
+            rebuild_status = gr.HTML(visible=False)
     
     return {
+        'assistant_query': assistant_query,
+        'assistant_btn': assistant_btn,
+        'assistant_response': assistant_response,
+        'ai_analysis_text': ai_analysis_text,
+        'consistency_btn': consistency_btn,
+        'suggest_btn': suggest_btn,
+        'context_enhance_btn': context_enhance_btn,
+        'context_enhancement_type': context_enhancement_type,
+        'ai_analysis_output': ai_analysis_output,
         'search_input': search_input,
         'search_btn': search_btn,
         'search_results': search_results,
@@ -91,8 +141,68 @@ def create_story_intelligence_interface():
         'create_world_btn': create_world_btn,
         'world_status': world_status,
         'world_dropdown': world_dropdown,
-        'world_display': world_display
+        'world_display': world_display,
+        'rebuild_btn': rebuild_btn,
+        'rebuild_status': rebuild_status
     }
+
+
+# ... keep existing code (display_stories, display_characters, display_world_elements, perform_search functions)
+
+def query_knowledge_assistant(query: str) -> tuple[str, Any]:
+    """Process knowledge assistant queries."""
+    if not query.strip():
+        return "Please enter a query.", gr.update(visible=False)
+    
+    try:
+        response = knowledge_assistant.process_query(query)
+        formatted_response = f'<div class="search-results"><pre>{response}</pre></div>'
+        return formatted_response, gr.update(visible=True)
+    except Exception as e:
+        error_response = f'<div class="status-error">❌ Error processing query: {str(e)}</div>'
+        return error_response, gr.update(visible=True)
+
+
+def analyze_consistency(text: str) -> tuple[str, Any]:
+    """Analyze character consistency."""
+    if not text.strip():
+        return "Please provide text to analyze.", gr.update(visible=False)
+    
+    analysis, status = analyze_character_consistency(text)
+    formatted_response = f'<div class="search-results"><h4>Character Consistency Analysis</h4><pre>{analysis}</pre></div>'
+    return formatted_response, gr.update(visible=True)
+
+
+def suggest_elements(text: str) -> tuple[str, Any]:
+    """Suggest story elements."""
+    if not text.strip():
+        return "Please provide text for suggestions.", gr.update(visible=False)
+    
+    suggestions, status = suggest_story_elements(text)
+    formatted_response = f'<div class="search-results"><h4>Story Element Suggestions</h4><pre>{suggestions}</pre></div>'
+    return formatted_response, gr.update(visible=True)
+
+
+def enhance_with_context(text: str, enhancement_type: str) -> tuple[str, Any]:
+    """Enhance text with context awareness."""
+    if not text.strip():
+        return "Please provide text to enhance.", gr.update(visible=False)
+    
+    enhanced, status = enhance_script_with_context(text, enhancement_type)
+    formatted_response = f'<div class="search-results"><h4>Context-Aware Enhancement ({enhancement_type})</h4><pre>{enhanced}</pre></div>'
+    return formatted_response, gr.update(visible=True)
+
+
+def rebuild_knowledge_index() -> tuple[str, Any]:
+    """Rebuild the knowledge base index."""
+    try:
+        from rag_services import rag_service
+        rag_service.rebuild_index_from_projects()
+        response = '<div class="status-success">✅ Knowledge base index rebuilt successfully!</div>'
+        return response, gr.update(visible=True)
+    except Exception as e:
+        response = f'<div class="status-error">❌ Error rebuilding index: {str(e)}</div>'
+        return response, gr.update(visible=True)
 
 
 def display_stories():
@@ -295,11 +405,49 @@ def create_interface():
                             export_file = gr.File(label="Download")
                             export_status = gr.HTML(visible=False)
             
-            # Story Intelligence Tab (New functionality)
+            # Story Intelligence Tab (Enhanced with RAG)
             with gr.TabItem("📚 Story Intelligence"):
                 story_components = create_story_intelligence_interface()
         
         # Event Handlers for Scripts Tab
+        
+        # ... keep existing code (create project, load project, update word count, save script content, generate TTS, OCR, AI enhancement, export functionality)
+        
+        # Event Handlers for Story Intelligence Tab
+        
+        # Knowledge Assistant
+        story_components['assistant_btn'].click(
+            fn=query_knowledge_assistant,
+            inputs=[story_components['assistant_query']],
+            outputs=[story_components['assistant_response'], story_components['assistant_response']]
+        )
+        
+        # AI Analysis Tools
+        story_components['consistency_btn'].click(
+            fn=analyze_consistency,
+            inputs=[story_components['ai_analysis_text']],
+            outputs=[story_components['ai_analysis_output'], story_components['ai_analysis_output']]
+        )
+        
+        story_components['suggest_btn'].click(
+            fn=suggest_elements,
+            inputs=[story_components['ai_analysis_text']],
+            outputs=[story_components['ai_analysis_output'], story_components['ai_analysis_output']]
+        )
+        
+        story_components['context_enhance_btn'].click(
+            fn=enhance_with_context,
+            inputs=[story_components['ai_analysis_text'], story_components['context_enhancement_type']],
+            outputs=[story_components['ai_analysis_output'], story_components['ai_analysis_output']]
+        )
+        
+        # Knowledge Base Management
+        story_components['rebuild_btn'].click(
+            fn=rebuild_knowledge_index,
+            outputs=[story_components['rebuild_status'], story_components['rebuild_status']]
+        )
+        
+        # ... keep existing code (create story, create character, create world element, search functionality)
         
         # Create new project
         create_btn.click(
@@ -309,56 +457,6 @@ def create_interface():
         ).then(
             lambda: ("", gr.update(visible=True)),
             outputs=[new_project_name, create_status]
-        )
-        
-        # ... keep existing code (load project, update word count, save script content, generate TTS, OCR, AI enhancement, export functionality)
-        
-        # Event Handlers for Story Intelligence Tab
-        
-        # Create story
-        story_components['create_story_btn'].click(
-            fn=create_story,
-            inputs=[story_components['new_story_title'], story_components['new_story_desc']],
-            outputs=[story_components['story_status'], story_components['story_dropdown']]
-        ).then(
-            lambda: ("", "", gr.update(visible=True)),
-            outputs=[story_components['new_story_title'], story_components['new_story_desc'], story_components['story_status']]
-        ).then(
-            fn=display_stories,
-            outputs=[story_components['stories_display']]
-        )
-        
-        # Create character
-        story_components['create_char_btn'].click(
-            fn=create_character,
-            inputs=[story_components['new_char_name'], story_components['new_char_desc']],
-            outputs=[story_components['char_status'], story_components['character_dropdown']]
-        ).then(
-            lambda: ("", "", gr.update(visible=True)),
-            outputs=[story_components['new_char_name'], story_components['new_char_desc'], story_components['char_status']]
-        ).then(
-            fn=display_characters,
-            outputs=[story_components['characters_display']]
-        )
-        
-        # Create world element
-        story_components['create_world_btn'].click(
-            fn=create_world_element,
-            inputs=[story_components['new_world_name'], story_components['world_type'], story_components['new_world_desc']],
-            outputs=[story_components['world_status'], story_components['world_dropdown']]
-        ).then(
-            lambda: ("", "", gr.update(visible=True)),
-            outputs=[story_components['new_world_name'], story_components['new_world_desc'], story_components['world_status']]
-        ).then(
-            fn=display_world_elements,
-            outputs=[story_components['world_display']]
-        )
-        
-        # Search functionality
-        story_components['search_btn'].click(
-            fn=perform_search,
-            inputs=[story_components['search_input']],
-            outputs=[story_components['search_results']]
         )
         
         # Load project when selected
@@ -423,6 +521,52 @@ def create_interface():
         ).then(
             lambda: gr.update(visible=True),
             outputs=[export_status]
+        )
+        
+        # Create story
+        story_components['create_story_btn'].click(
+            fn=create_story,
+            inputs=[story_components['new_story_title'], story_components['new_story_desc']],
+            outputs=[story_components['story_status'], story_components['story_dropdown']]
+        ).then(
+            lambda: ("", "", gr.update(visible=True)),
+            outputs=[story_components['new_story_title'], story_components['new_story_desc'], story_components['story_status']]
+        ).then(
+            fn=display_stories,
+            outputs=[story_components['stories_display']]
+        )
+        
+        # Create character
+        story_components['create_char_btn'].click(
+            fn=create_character,
+            inputs=[story_components['new_char_name'], story_components['new_char_desc']],
+            outputs=[story_components['char_status'], story_components['character_dropdown']]
+        ).then(
+            lambda: ("", "", gr.update(visible=True)),
+            outputs=[story_components['new_char_name'], story_components['new_char_desc'], story_components['char_status']]
+        ).then(
+            fn=display_characters,
+            outputs=[story_components['characters_display']]
+        )
+        
+        # Create world element
+        story_components['create_world_btn'].click(
+            fn=create_world_element,
+            inputs=[story_components['new_world_name'], story_components['world_type'], story_components['new_world_desc']],
+            outputs=[story_components['world_status'], story_components['world_dropdown']]
+        ).then(
+            lambda: ("", "", gr.update(visible=True)),
+            outputs=[story_components['new_world_name'], story_components['new_world_desc'], story_components['world_status']]
+        ).then(
+            fn=display_world_elements,
+            outputs=[story_components['world_display']]
+        )
+        
+        # Search functionality
+        story_components['search_btn'].click(
+            fn=perform_search,
+            inputs=[story_components['search_input']],
+            outputs=[story_components['search_results']]
         )
         
         # Load initial story intelligence data
