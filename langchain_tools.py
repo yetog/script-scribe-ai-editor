@@ -2,121 +2,182 @@
 """LangChain tools and utilities for ScriptVoice with IONOS AI Model Hub integration."""
 
 import os
+import requests
+import json
 from typing import Optional
-from config import IONOS_API_TOKEN, IONOS_MODEL_NAME, IONOS_ENDPOINT, OPENAI_API_KEY
+from config import IONOS_API_TOKEN, IONOS_MODEL_NAME, IONOS_ENDPOINT, OPENAI_API_KEY, IONOS_CHAT_URL
+from ionos_collections import ionos_collections
 
-def get_ionos_client():
-    """Get IONOS AI client if API token is available."""
+# ... keep existing code (get_ionos_client, get_openai_client, get_ai_client functions)
+
+def create_ionos_automated_rag_prompt(query: str, collection_name: str, enhancement_type: str = "general") -> str:
+    """Create automated RAG prompt for IONOS with context variables."""
+    
+    if enhancement_type == "character_consistency":
+        return f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You are an expert story analyst. Use the information from the context to analyze character consistency and development. Focus on character traits, dialogue patterns, and behavioral consistency. Be specific and provide actionable insights.
+<|eot_id|>
+<|start_header_id|>context<|end_header_id|>
+{{{{.context}}}}<|eot_id|>
+<|start_header_id|>user<|end_header_id|>
+{{{{.collection_query}}}}<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>"""
+
+    elif enhancement_type == "story_elements":
+        return f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You are a professional story development consultant. Use the context information to suggest story elements and improvements. Focus on plot development, pacing, narrative structure, and creative enhancements. Provide specific, actionable recommendations.
+<|eot_id|>
+<|start_header_id|>context<|end_header_id|>
+{{{{.context}}}}<|eot_id|>
+<|start_header_id|>user<|end_header_id|>
+{{{{.collection_query}}}}<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>"""
+
+    elif enhancement_type == "dialogue":
+        return f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You are a dialogue specialist. Use the context to enhance dialogue to make it more natural, engaging, and character-specific. Maintain the original meaning while improving flow and authenticity. Consider character backgrounds and relationships from the context.
+<|eot_id|>
+<|start_header_id|>context<|end_header_id|>
+{{{{.context}}}}<|eot_id|>
+<|start_header_id|>user<|end_header_id|>
+{{{{.collection_query}}}}<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>"""
+
+    elif enhancement_type == "description":
+        return f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You are a descriptive writing expert. Use the context information to enhance descriptions to be more vivid, immersive, and detailed. Use sensory details and precise language while maintaining consistency with the established world and characters.
+<|eot_id|>
+<|start_header_id|>context<|end_header_id|>
+{{{{.context}}}}<|eot_id|>
+<|start_header_id|>user<|end_header_id|>
+{{{{.collection_query}}}}<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>"""
+
+    else:  # general analysis
+        return f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You are an AI writing assistant. Use the information from the context to provide helpful analysis and suggestions. Be thorough, constructive, and specific in your feedback.
+<|eot_id|>
+<|start_header_id|>context<|end_header_id|>
+{{{{.context}}}}<|eot_id|>
+<|start_header_id|>user<|end_header_id|>
+{{{{.collection_query}}}}<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>"""
+
+def analyze_with_ionos_automated_rag(text: str, analysis_type: str = "general", content_type: str = "stories") -> str:
+    """Analyze text using IONOS Automated RAG if available."""
+    if not IONOS_API_TOKEN or not ionos_collections.is_available():
+        return analyze_text_with_ai(text, analysis_type)  # Fallback
+    
+    # Get appropriate collection
+    collection_id = ionos_collections.get_collection_id(content_type)
+    if not collection_id:
+        return analyze_text_with_ai(text, analysis_type)  # Fallback
+    
+    # Create automated RAG prompt
+    prompt = create_ionos_automated_rag_prompt(text, content_type, analysis_type)
+    
+    # Use IONOS Automated RAG endpoint
+    endpoint = f"https://inference.de-txl.ionos.com/models/{IONOS_MODEL_NAME}/predictions"
+    
+    body = {
+        "properties": {
+            "input": prompt,
+            "collectionId": collection_id,
+            "collectionQuery": text,
+            "options": {
+                "max_length": "1000",
+                "temperature": "0.1"
+            }
+        }
+    }
+    
+    headers = {
+        "Authorization": f"Bearer {IONOS_API_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    
     try:
-        from langchain_openai import ChatOpenAI
-        if IONOS_API_TOKEN:
-            return ChatOpenAI(
-                api_key=IONOS_API_TOKEN,
-                model=IONOS_MODEL_NAME,
-                base_url=IONOS_ENDPOINT
-            )
-        else:
-            print("Warning: IONOS API token not found.")
-            return None
-    except ImportError:
-        print("Warning: langchain-openai not installed. AI features will be limited.")
-        return None
-
-def get_openai_client():
-    """Get OpenAI client as fallback if API key is available."""
-    try:
-        from langchain_openai import ChatOpenAI
-        if OPENAI_API_KEY:
-            return ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo")
-        else:
-            print("Warning: OpenAI API key not found.")
-            return None
-    except ImportError:
-        print("Warning: langchain-openai not installed.")
-        return None
-
-def get_ai_client():
-    """Get AI client with IONOS as primary, OpenAI as fallback."""
-    # Try IONOS first
-    ionos_client = get_ionos_client()
-    if ionos_client:
-        print("Using IONOS AI Model Hub")
-        return ionos_client
-    
-    # Fallback to OpenAI
-    openai_client = get_openai_client()
-    if openai_client:
-        print("Using OpenAI as fallback")
-        return openai_client
-    
-    print("Warning: No AI providers available. AI features will be limited.")
-    return None
-
-def create_simple_chain(llm, prompt_template: str):
-    """Create a simple LangChain chain."""
-    if not llm:
-        return None
-    
-    try:
-        from langchain.prompts import PromptTemplate
-        from langchain.chains import LLMChain
-        
-        prompt = PromptTemplate(
-            input_variables=["text"],
-            template=prompt_template
-        )
-        return LLMChain(llm=llm, prompt=prompt)
-    except ImportError:
-        print("Warning: LangChain components not available.")
-        return None
-
-def analyze_text_with_ai(text: str, analysis_type: str = "general") -> str:
-    """Analyze text using AI if available, otherwise return placeholder."""
-    llm = get_ai_client()
-    
-    if not llm:
-        return f"AI analysis not available (missing API keys). Analysis type: {analysis_type}"
-    
-    try:
-        if analysis_type == "character_consistency":
-            prompt = "Analyze the following text for character consistency and development. Focus on character traits, dialogue patterns, and behavioral consistency:\n\n{text}"
-        elif analysis_type == "story_elements":
-            prompt = "Suggest story elements and improvements for the following text. Include recommendations for plot development, pacing, and narrative structure:\n\n{text}"
-        else:
-            prompt = "Provide a general analysis of the following text:\n\n{text}"
-        
-        chain = create_simple_chain(llm, prompt)
-        if chain:
-            result = chain.run(text=text)
-            return result
-        else:
-            return f"Analysis chain could not be created. Type: {analysis_type}"
+        response = requests.post(endpoint, json=body, headers=headers)
+        if response.status_code == 200:
+            result = response.json()
+            output = result.get("properties", {}).get("output", "")
+            if output:
+                return output
     except Exception as e:
-        return f"Error during AI analysis: {str(e)}"
+        print(f"Error with IONOS automated RAG: {e}")
+    
+    # Fallback to regular AI analysis
+    return analyze_text_with_ai(text, analysis_type)
+
+def enhance_with_ionos_automated_rag(text: str, enhancement_type: str = "general", content_type: str = "stories") -> str:
+    """Enhance text using IONOS Automated RAG if available."""
+    if not IONOS_API_TOKEN or not ionos_collections.is_available():
+        return enhance_text_with_context(text, enhancement_type)  # Fallback
+    
+    # Get appropriate collection based on enhancement type
+    collection_map = {
+        "dialogue": "characters",
+        "description": "world_elements", 
+        "pacing": "stories"
+    }
+    collection_name = collection_map.get(enhancement_type, content_type)
+    collection_id = ionos_collections.get_collection_id(collection_name)
+    
+    if not collection_id:
+        return enhance_text_with_context(text, enhancement_type)  # Fallback
+    
+    # Create automated RAG prompt for enhancement
+    prompt = create_ionos_automated_rag_prompt(text, collection_name, enhancement_type)
+    
+    endpoint = f"https://inference.de-txl.ionos.com/models/{IONOS_MODEL_NAME}/predictions"
+    
+    body = {
+        "properties": {
+            "input": prompt,
+            "collectionId": collection_id,
+            "collectionQuery": text,
+            "options": {
+                "max_length": "1500",
+                "temperature": "0.2"
+            }
+        }
+    }
+    
+    headers = {
+        "Authorization": f"Bearer {IONOS_API_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        response = requests.post(endpoint, json=body, headers=headers)
+        if response.status_code == 200:
+            result = response.json()
+            output = result.get("properties", {}).get("output", "")
+            if output:
+                return output
+    except Exception as e:
+        print(f"Error with IONOS automated RAG enhancement: {e}")
+    
+    # Fallback to regular enhancement
+    return enhance_text_with_context(text, enhancement_type)
+
+# Update existing functions to use IONOS automated RAG
+def analyze_text_with_ai(text: str, analysis_type: str = "general") -> str:
+    """Analyze text using AI with IONOS automated RAG priority."""
+    # Try IONOS automated RAG first
+    if IONOS_API_TOKEN and ionos_collections.is_available():
+        result = analyze_with_ionos_automated_rag(text, analysis_type)
+        if result and "Error" not in result:
+            return result
+    
+    # ... keep existing code (fallback to regular LangChain)
 
 def enhance_text_with_context(text: str, enhancement_type: str = "general") -> str:
-    """Enhance text with AI if available."""
-    llm = get_ai_client()
-    
-    if not llm:
-        return text  # Return original text if AI not available
-    
-    try:
-        if enhancement_type == "dialogue":
-            prompt = "Enhance the dialogue in the following text to make it more natural, engaging, and character-specific. Maintain the original meaning while improving flow and authenticity:\n\n{text}"
-        elif enhancement_type == "description":
-            prompt = "Enhance the descriptions in the following text to be more vivid, immersive, and detailed. Use sensory details and more precise language:\n\n{text}"
-        elif enhancement_type == "pacing":
-            prompt = "Improve the pacing and flow of the following text. Adjust sentence structure, paragraph breaks, and narrative rhythm for better readability:\n\n{text}"
-        else:
-            prompt = "Improve and enhance the following text while maintaining its original meaning and style:\n\n{text}"
-        
-        chain = create_simple_chain(llm, prompt)
-        if chain:
-            result = chain.run(text=text)
+    """Enhance text with AI using IONOS automated RAG priority."""
+    # Try IONOS automated RAG first
+    if IONOS_API_TOKEN and ionos_collections.is_available():
+        result = enhance_with_ionos_automated_rag(text, enhancement_type)
+        if result and result != text:
             return result
-        else:
-            return text
-    except Exception as e:
-        print(f"Error during text enhancement: {str(e)}")
-        return text
+    
+    # ... keep existing code (fallback to regular LangChain)
