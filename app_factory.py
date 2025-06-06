@@ -1,4 +1,3 @@
-
 """Main application factory for ScriptVoice."""
 
 import gradio as gr
@@ -11,6 +10,8 @@ from ui_components import CUSTOM_CSS, get_header_html
 from enhancement_services import enhance_script_placeholder
 from export_services import export_project
 from interface_components import create_scripts_interface, create_story_intelligence_interface
+from mood_board_components import create_mood_board_interface, generate_mood_board, save_mood_board
+from context_helpers import get_story_context, get_character_context, get_world_context
 from event_handlers import (
     query_knowledge_assistant, analyze_consistency, suggest_elements,
     enhance_with_context, rebuild_knowledge_index, display_stories,
@@ -179,6 +180,39 @@ def setup_story_intelligence_event_handlers(story_components):
     )
 
 
+def setup_mood_board_event_handlers(mood_board_components):
+    """Set up event handlers for the mood board interface."""
+    
+    # Generate mood board
+    mood_board_components['generate_btn'].click(
+        fn=generate_mood_board,
+        inputs=[
+            mood_board_components['story_selector'],
+            mood_board_components['character_selector'], 
+            mood_board_components['world_selector'],
+            mood_board_components['custom_prompt'],
+            mood_board_components['style_selector']
+        ],
+        outputs=[
+            mood_board_components['mood_board_gallery'],
+            mood_board_components['generation_status']
+        ]
+    )
+    
+    # Save mood board
+    mood_board_components['save_btn'].click(
+        fn=save_mood_board,
+        inputs=[
+            mood_board_components['mood_board_gallery'],
+            mood_board_components['mood_board_name']
+        ],
+        outputs=[mood_board_components['save_status']]
+    ).then(
+        lambda: ("", gr.update(visible=True)),
+        outputs=[mood_board_components['mood_board_name'], mood_board_components['save_status']]
+    )
+
+
 def create_interface():
     """Create the main Gradio interface with improved UI."""
     
@@ -215,6 +249,13 @@ def create_interface():
                 
                 # Set up event handlers
                 setup_story_intelligence_event_handlers(story_components)
+            
+            # Mood Board Tab (New)
+            with gr.TabItem("🎨 Mood Board", elem_id="mood-board-tab"):
+                mood_board_components = create_mood_board_interface()
+                
+                # Set up event handlers
+                setup_mood_board_event_handlers(mood_board_components)
         
         # Load initial data
         app.load(

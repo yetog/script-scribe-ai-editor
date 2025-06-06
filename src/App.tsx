@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Edit, Palette, Settings } from "lucide-react";
 import StoriesPanel from '@/components/StoriesPanel';
-import MoodBoardPanel from '@/components/MoodBoardPanel';
 import { Toaster } from "@/components/ui/toaster";
 
 function App() {
@@ -23,7 +22,7 @@ function App() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-4 w-full max-w-2xl mx-auto bg-gray-900 mb-8">
+          <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto bg-gray-900 mb-8">
             <TabsTrigger 
               value="stories" 
               className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
@@ -32,25 +31,11 @@ function App() {
               Stories
             </TabsTrigger>
             <TabsTrigger 
-              value="moodboard" 
-              className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
-            >
-              <Palette className="h-4 w-4 mr-2" />
-              Mood Board
-            </TabsTrigger>
-            <TabsTrigger 
-              value="editor" 
+              value="app" 
               className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
             >
               <Edit className="h-4 w-4 mr-2" />
-              Editor
-            </TabsTrigger>
-            <TabsTrigger 
-              value="settings" 
-              className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
+              Launch App
             </TabsTrigger>
           </TabsList>
 
@@ -58,23 +43,27 @@ function App() {
             <StoriesPanel />
           </TabsContent>
 
-          <TabsContent value="moodboard" className="mt-0">
-            <MoodBoardPanel />
-          </TabsContent>
-
-          <TabsContent value="editor" className="mt-0">
+          <TabsContent value="app" className="mt-0">
             <div className="text-center py-20">
-              <Edit className="h-16 w-16 mx-auto mb-4 text-gray-600" />
-              <h3 className="text-2xl font-semibold mb-2 text-gray-300">Script Editor</h3>
-              <p className="text-gray-400">Coming soon - Advanced script editing with AI assistance</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="settings" className="mt-0">
-            <div className="text-center py-20">
-              <Settings className="h-16 w-16 mx-auto mb-4 text-gray-600" />
-              <h3 className="text-2xl font-semibold mb-2 text-gray-300">Settings</h3>
-              <p className="text-gray-400">Configuration and preferences panel</p>
+              <div className="bg-gray-900 rounded-lg p-8 max-w-2xl mx-auto">
+                <Edit className="h-16 w-16 mx-auto mb-4 text-red-500" />
+                <h3 className="text-2xl font-semibold mb-4 text-gray-300">Full ScriptVoice Application</h3>
+                <p className="text-gray-400 mb-6">
+                  Access the complete Python/Gradio application with advanced script editing, 
+                  AI mood board generation, and story intelligence features.
+                </p>
+                <a 
+                  href="http://localhost:7860" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                >
+                  🚀 Launch ScriptVoice App
+                </a>
+                <p className="text-sm text-gray-500 mt-4">
+                  Make sure to run: <code className="bg-gray-800 px-2 py-1 rounded">python main.py</code>
+                </p>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
