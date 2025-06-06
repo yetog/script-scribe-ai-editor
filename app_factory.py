@@ -10,7 +10,10 @@ from ui_components import CUSTOM_CSS, get_header_html
 from enhancement_services import enhance_script_placeholder
 from export_services import export_project
 from interface_components import create_scripts_interface, create_story_intelligence_interface
-from mood_board_components import create_mood_board_interface, generate_mood_board, save_mood_board
+from mood_board_components import (
+    create_mood_board_interface, generate_mood_board, save_mood_board, 
+    populate_mood_board_dropdowns
+)
 from context_helpers import get_story_context, get_character_context, get_world_context
 from event_handlers import (
     query_knowledge_assistant, analyze_consistency, suggest_elements,
@@ -212,6 +215,14 @@ def setup_mood_board_event_handlers(mood_board_components):
         outputs=[mood_board_components['mood_board_name'], mood_board_components['save_status']]
     )
 
+def update_mood_board_dropdowns():
+    """Update mood board dropdowns with current story elements."""
+    story_choices, character_choices, world_choices = populate_mood_board_dropdowns()
+    return (
+        gr.update(choices=story_choices),
+        gr.update(choices=character_choices),
+        gr.update(choices=world_choices)
+    )
 
 def create_interface():
     """Create the main Gradio interface with improved UI."""
@@ -257,7 +268,7 @@ def create_interface():
                 # Set up event handlers
                 setup_mood_board_event_handlers(mood_board_components)
         
-        # Load initial data
+        # Load initial data for all tabs
         app.load(
             fn=display_stories,
             outputs=[story_components['stories_display']]
@@ -269,6 +280,44 @@ def create_interface():
         app.load(
             fn=display_world_elements,
             outputs=[story_components['world_display']]
+        )
+        
+        # Load mood board dropdown data
+        app.load(
+            fn=update_mood_board_dropdowns,
+            outputs=[
+                mood_board_components['story_selector'],
+                mood_board_components['character_selector'],
+                mood_board_components['world_selector']
+            ]
+        )
+        
+        # Update mood board dropdowns when stories/characters are created
+        story_components['create_story_btn'].click(
+            fn=update_mood_board_dropdowns,
+            outputs=[
+                mood_board_components['story_selector'],
+                mood_board_components['character_selector'],
+                mood_board_components['world_selector']
+            ]
+        )
+        
+        story_components['create_char_btn'].click(
+            fn=update_mood_board_dropdowns,
+            outputs=[
+                mood_board_components['story_selector'],
+                mood_board_components['character_selector'],
+                mood_board_components['world_selector']
+            ]
+        )
+        
+        story_components['create_world_btn'].click(
+            fn=update_mood_board_dropdowns,
+            outputs=[
+                mood_board_components['story_selector'],
+                mood_board_components['character_selector'],
+                mood_board_components['world_selector']
+            ]
         )
     
     return app

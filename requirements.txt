@@ -12,3 +12,4 @@ chromadb
 setuptools>=65.0.0
 langchain-openai
 tiktoken>=0.5.0
+requests

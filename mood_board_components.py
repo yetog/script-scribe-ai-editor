@@ -3,7 +3,8 @@
 
 import gradio as gr
 from image_generation_service import image_generator
-from models import load_projects, get_story_context, get_character_context, get_world_context
+from context_helpers import get_story_context, get_character_context, get_world_context
+from models import load_projects
 
 def create_mood_board_interface():
     """Create the mood board interface for Gradio."""
@@ -154,8 +155,50 @@ def save_mood_board(images, name):
         return gr.update(value="❌ Please generate images and provide a name", visible=True)
     
     try:
-        # In a real implementation, you'd save to database or file system
-        # For now, just return success message
+        import os
+        import json
+        from datetime import datetime
+        
+        # Create mood_boards directory if it doesn't exist
+        os.makedirs("mood_boards", exist_ok=True)
+        
+        # Save mood board data
+        mood_board_data = {
+            "name": name,
+            "images": images,
+            "created_at": datetime.now().isoformat(),
+            "id": str(hash(name + str(datetime.now())))
+        }
+        
+        # Save to JSON file
+        mood_board_file = f"mood_boards/{name.replace(' ', '_')}.json"
+        with open(mood_board_file, 'w') as f:
+            json.dump(mood_board_data, f, indent=2)
+        
         return gr.update(value=f"✅ Mood board '{name}' saved successfully!", visible=True)
     except Exception as e:
         return gr.update(value=f"❌ Error saving: {str(e)}", visible=True)
+
+def populate_mood_board_dropdowns():
+    """Populate the mood board dropdowns with story elements."""
+    try:
+        data = load_projects()
+        
+        # Get stories
+        stories = data.get("stories", {})
+        story_choices = [(story.get("title", f"Story {story_id}"), story_id) 
+                        for story_id, story in stories.items()]
+        
+        # Get characters
+        characters = data.get("characters", {})
+        character_choices = [(char.get("name", f"Character {char_id}"), char_id) 
+                           for char_id, char in characters.items()]
+        
+        # Get world elements
+        world_elements = data.get("world_elements", {})
+        world_choices = [(elem.get("name", f"Element {elem_id}"), elem_id) 
+                        for elem_id, elem in world_elements.items()]
+        
+        return story_choices, character_choices, world_choices
+    except:
+        return [], [], []

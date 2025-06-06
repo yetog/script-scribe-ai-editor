@@ -1,0 +1,278 @@
+
+# ScriptVoice - AI-Powered Story Intelligence Platform
+## Complete User Guide
+
+### 🚀 QUICK START
+
+1. **Installation & Setup**
+   ```bash
+   # Clone or download the project
+   cd scriptvoice
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   
+   # Install Tesseract OCR (for image text extraction)
+   # Ubuntu/Debian: sudo apt-get install tesseract-ocr
+   # macOS: brew install tesseract
+   # Windows: Download from GitHub releases
+   
+   # Run the application
+   python main.py
+   ```
+
+2. **Access the Application**
+   - Main Gradio App: http://localhost:7860
+   - React Landing Page: http://localhost:8080 (if running separately)
+
+### 🔧 CONFIGURATION
+
+**IONOS AI API Setup (Required for Image Generation)**
+1. Get your IONOS AI Model Hub API token
+2. Set in config.py or environment variable:
+   ```python
+   IONOS_API_TOKEN = "your_token_here"
+   ```
+
+**OpenAI API Setup (Optional - Fallback)**
+1. Get OpenAI API key from https://platform.openai.com
+2. Set OPENAI_API_KEY in config.py or environment
+
+### 📝 SCRIPTS TAB - Text-to-Speech Script Editor
+
+**Creating Your First Project**
+1. Enter project name in "New Project Name" field
+2. Click "➕ Create Project"
+3. Project appears in dropdown menu
+
+**Writing Scripts**
+1. Select project from dropdown
+2. Type in main editor area
+3. Word count updates automatically
+4. Use Notes section for metadata/directions
+
+**Text-to-Speech Features**
+1. Adjust voice speed with slider (0.5x to 2.0x)
+2. Click "🔊 Play TTS" to generate audio
+3. Audio file downloads automatically
+4. Supports multiple languages via gTTS
+
+**OCR Text Extraction**
+1. Upload image with text using file uploader
+2. Click "📷 Extract Text" 
+3. Extracted text appears in editor
+4. Supports: PNG, JPG, JPEG, GIF, BMP, TIFF
+
+**AI Enhancement (Framework Ready)**
+1. Select enhancement type: dialogue, narrative, action, etc.
+2. Click "✨ Enhance Script"
+3. AI improves tone and style
+4. Note: Requires API configuration
+
+**Export Options**
+1. Choose format: Text (.txt) or Audio (.mp3)
+2. Click "📤 Export"
+3. File downloads automatically
+
+### 📚 STORY INTELLIGENCE TAB - Knowledge Management
+
+**Creating Story Elements**
+
+**Stories**
+1. Enter title and description
+2. Click "📖 Create Story"
+3. Story appears in knowledge base
+
+**Characters**
+1. Enter name and detailed description
+2. Include personality traits, appearance
+3. Click "👤 Create Character"
+
+**World Elements**
+1. Choose type: Location, Organization, Technology, Culture, etc.
+2. Enter name and description
+3. Click "🌍 Create World Element"
+
+**Knowledge Assistant**
+1. Ask questions about your story world
+2. Get AI-powered insights and suggestions
+3. Example: "What are the main conflicts in my story?"
+
+**AI Analysis Tools**
+1. **Consistency Check**: Analyze text for plot holes
+2. **Suggest Elements**: Get recommendations for missing pieces
+3. **Context Enhancement**: Improve text with story context
+
+**Search & Discovery**
+1. Use search to find specific story elements
+2. Filter by type: stories, characters, locations
+3. Cross-reference related elements
+
+### 🎨 MOOD BOARD TAB - AI Image Generation
+
+**Setting Up Image Generation**
+1. Ensure IONOS API token is configured
+2. Create story elements first (stories, characters, worlds)
+3. Dropdowns auto-populate with your content
+
+**Generating Images**
+
+**From Story Context**
+1. Select story from dropdown
+2. Optionally add character and world element
+3. Choose art style: photorealistic, artistic, cinematic, fantasy, noir
+4. Click "🎨 Generate Mood Board"
+
+**Custom Prompts**
+1. Leave dropdowns empty
+2. Write detailed prompt in text area
+3. Select art style
+4. Generate single image or mood board
+
+**Managing Mood Boards**
+1. View generated images in gallery
+2. Enter name for mood board
+3. Click "💾 Save" to persist
+4. Access saved boards in accordion below
+
+**Image Styles Guide**
+- **Photorealistic**: High-quality, realistic images
+- **Artistic**: Painted, creative artistic style
+- **Cinematic**: Film-like with dramatic lighting
+- **Fantasy**: Magical, ethereal concept art
+- **Noir**: Black & white, dramatic shadows
+
+### 🎯 BEST PRACTICES
+
+**Story Development Workflow**
+1. Start with core story concept in Stories tab
+2. Create main characters with detailed descriptions
+3. Build world elements (locations, cultures, tech)
+4. Use AI assistant to analyze and improve
+5. Generate mood boards for visual inspiration
+6. Write scripts with context enhancement
+
+**Character Creation Tips**
+- Include physical appearance, personality traits
+- Add background, motivations, conflicts
+- Mention relationships to other characters
+- Use specific details for better AI analysis
+
+**World Building Strategy**
+- Create locations with atmosphere descriptions
+- Define cultures with customs and values
+- Design technology with capabilities and limits
+- Establish organizations with goals and structure
+
+**Image Generation Tips**
+- Be specific in prompts: "medieval castle on cliff" vs "castle"
+- Combine story elements for richer context
+- Use different styles for different needs
+- Save successful prompts for reuse
+
+### 🔍 TROUBLESHOOTING
+
+**Common Issues**
+
+**"API Token Not Configured"**
+- Check IONOS_API_TOKEN in config.py
+- Verify token is valid and not expired
+- Ensure no extra spaces in token string
+
+**"Failed to Generate Images"**
+- Check internet connection
+- Verify API quota/credits
+- Try simpler prompts if complex ones fail
+- Check IONOS API status
+
+**OCR Not Working**
+- Install Tesseract OCR properly
+- Check image quality and text clarity
+- Supported formats: PNG, JPG, JPEG, GIF, BMP, TIFF
+
+**Audio Generation Issues**
+- Check internet connection (gTTS requires online)
+- Verify audio output folder exists
+- Try shorter text samples first
+
+**Knowledge Base Empty**
+- Create stories, characters, worlds first
+- Check projects.json file exists
+- Restart application if data not loading
+
+### 📂 FILE STRUCTURE
+
+```
+scriptvoice/
+├── main.py                 # Application entry point
+├── config.py              # Configuration settings
+├── requirements.txt       # Python dependencies
+├── projects.json          # Story data storage
+├── audio_output/          # Generated TTS files
+├── generated_images/      # AI-generated images
+├── mood_boards/          # Saved mood board data
+├── temp/                 # Temporary files
+└── chromadb_storage/     # Vector database
+```
+
+### 🚀 ADVANCED FEATURES
+
+**Vector Search**
+- Automatic indexing of story content
+- Semantic search across all elements
+- Find related content automatically
+
+**Knowledge Graphs**
+- Visualize story relationships
+- Track character interactions
+- Map world connections
+
+**Batch Operations**
+- Generate multiple mood boards
+- Bulk export story elements
+- Mass character analysis
+
+### 💡 TIPS & TRICKS
+
+**Performance Optimization**
+- Keep story descriptions focused but detailed
+- Use consistent naming conventions
+- Regular knowledge base rebuilds
+- Clear temp files periodically
+
+**Creative Workflows**
+- Start broad, then narrow focus
+- Use mood boards for scene inspiration
+- Cross-reference character motivations
+- Build iteratively, not all at once
+
+### 🆘 SUPPORT
+
+**Getting Help**
+1. Check console output for error messages
+2. Review this documentation
+3. Check GitHub issues/discussions
+4. Verify all dependencies installed correctly
+
+**Reporting Issues**
+- Include error messages
+- Describe steps to reproduce
+- Share relevant configuration
+- Attach logs if available
+
+### 📈 FUTURE FEATURES
+
+**Planned Improvements**
+- Voice cloning integration
+- Advanced AI models
+- Collaborative editing
+- Cloud storage sync
+- Mobile app companion
+- Advanced analytics
+
+---
+
+**Built with ❤️ using Gradio, Python, and IONOS AI Model Hub**
+
+Last Updated: January 2024
+Version: 1.0
