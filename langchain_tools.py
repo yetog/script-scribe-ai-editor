@@ -1,217 +1,88 @@
 
-"""LangChain tools and chains for context-aware AI enhancement."""
+"""LangChain tools and utilities for ScriptVoice."""
 
-from typing import List, Dict, Any, Optional
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
-from langchain.schema import BaseOutputParser
-from rag_services import rag_service
+import os
+from typing import Optional, List, Dict, Any
 
+def get_openai_client():
+    """Get OpenAI client if API key is available."""
+    try:
+        from langchain_openai import ChatOpenAI
+        api_key = os.getenv("OPENAI_API_KEY")
+        if api_key:
+            return ChatOpenAI(api_key=api_key, model="gpt-3.5-turbo")
+        else:
+            print("Warning: OpenAI API key not found. AI features will be limited.")
+            return None
+    except ImportError:
+        print("Warning: langchain-openai not installed. AI features will be limited.")
+        return None
 
-class ContextAwareEnhancer:
-    """Handles context-aware script enhancement using RAG."""
+def create_simple_chain(llm, prompt_template: str):
+    """Create a simple LangChain chain."""
+    if not llm:
+        return None
     
-    def __init__(self):
-        self.enhancement_prompts = {
-            "dramatic": """
-You are enhancing a script with dramatic flair. Use the following context about characters and story elements to make the enhancement more consistent and engaging.
+    try:
+        from langchain.prompts import PromptTemplate
+        from langchain.chains import LLMChain
+        
+        prompt = PromptTemplate(
+            input_variables=["text"],
+            template=prompt_template
+        )
+        return LLMChain(llm=llm, prompt=prompt)
+    except ImportError:
+        print("Warning: LangChain components not available.")
+        return None
 
-CONTEXT:
-{context}
-
-ORIGINAL SCRIPT:
-{script}
-
-Please enhance this script with dramatic elements while maintaining consistency with the established characters and world. Focus on:
-- Heightened emotional stakes
-- Compelling character motivations
-- Dramatic tension and conflict
-- Rich, evocative language
-
-ENHANCED SCRIPT:
-""",
-            "romantic": """
-You are enhancing a script with romantic elements. Use the following context about characters and relationships to create authentic romantic moments.
-
-CONTEXT:
-{context}
-
-ORIGINAL SCRIPT:
-{script}
-
-Please enhance this script with romantic elements while staying true to the established characters and their relationships. Focus on:
-- Emotional intimacy and connection
-- Character chemistry and dynamics
-- Tender, heartfelt dialogue
-- Romantic atmosphere and mood
-
-ENHANCED SCRIPT:
-""",
-            "professional": """
-You are enhancing a script for professional presentation. Use the following context to ensure accuracy and consistency.
-
-CONTEXT:
-{context}
-
-ORIGINAL SCRIPT:
-{script}
-
-Please enhance this script for a professional context while maintaining consistency with established facts and characters. Focus on:
-- Clear, authoritative language
-- Proper structure and flow
-- Professional tone and delivery
-- Accurate information and details
-
-ENHANCED SCRIPT:
-""",
-            "casual": """
-You are making a script more casual and conversational. Use the following context about characters to match their established personalities.
-
-CONTEXT:
-{context}
-
-ORIGINAL SCRIPT:
-{script}
-
-Please enhance this script with a casual, conversational tone while keeping character voices consistent. Focus on:
-- Natural, everyday language
-- Relaxed, friendly tone
-- Character-appropriate dialogue
-- Conversational flow and rhythm
-
-ENHANCED SCRIPT:
-""",
-            "character_consistent": """
-You are enhancing a script to be more consistent with established characters. Use the character information below to guide your enhancement.
-
-CHARACTER CONTEXT:
-{context}
-
-ORIGINAL SCRIPT:
-{script}
-
-Please enhance this script to be more consistent with the established characters. Ensure:
-- Dialogue matches character personalities and speech patterns
-- Actions align with character motivations
-- Character relationships are honored
-- Character development feels authentic
-
-ENHANCED SCRIPT:
-""",
-            "plot_coherent": """
-You are enhancing a script to improve plot coherence. Use the story context below to ensure consistency.
-
-STORY CONTEXT:
-{context}
-
-ORIGINAL SCRIPT:
-{script}
-
-Please enhance this script to improve plot coherence and consistency. Focus on:
-- Logical story progression
-- Consistent world-building elements
-- Proper setup and payoff
-- Clear cause and effect relationships
-
-ENHANCED SCRIPT:
-"""
-        }
+def analyze_text_with_ai(text: str, analysis_type: str = "general") -> str:
+    """Analyze text using AI if available, otherwise return placeholder."""
+    llm = get_openai_client()
     
-    def get_relevant_context(self, script: str, enhancement_type: str, max_context_length: int = 1000) -> str:
-        """Get relevant context for script enhancement."""
-        if not script.strip():
-            return "No relevant context found."
-        
-        # Search for relevant content
-        results = rag_service.search(script, k=5)
-        
-        if not results:
-            return "No relevant context found."
-        
-        # Build context string
-        context_parts = []
-        current_length = 0
-        
-        for result in results:
-            metadata = result['metadata']
-            content = result['content']
-            
-            # Create context entry
-            context_entry = f"\n--- {metadata.get('content_type', 'Content').title()}: {metadata.get('title', 'Unknown')} ---\n{content}\n"
-            
-            if current_length + len(context_entry) > max_context_length:
-                break
-            
-            context_parts.append(context_entry)
-            current_length += len(context_entry)
-        
-        return "\n".join(context_parts) if context_parts else "No relevant context found."
+    if not llm:
+        return f"AI analysis not available (missing OpenAI API key). Analysis type: {analysis_type}"
     
-    def enhance_script_with_context(self, script: str, enhancement_type: str) -> tuple[str, str]:
-        """Enhance script using relevant context from the knowledge base."""
-        if enhancement_type not in self.enhancement_prompts:
-            return script, f'<div class="status-error">❌ Unknown enhancement type: {enhancement_type}</div>'
+    try:
+        if analysis_type == "character_consistency":
+            prompt = "Analyze the following text for character consistency and development:\n\n{text}"
+        elif analysis_type == "story_elements":
+            prompt = "Suggest story elements and improvements for the following text:\n\n{text}"
+        else:
+            prompt = "Provide a general analysis of the following text:\n\n{text}"
         
-        # Get relevant context
-        context = self.get_relevant_context(script, enhancement_type)
-        
-        # For now, return a placeholder with context info
-        enhanced_script = f"""[CONTEXT-AWARE {enhancement_type.upper()} ENHANCEMENT]
+        chain = create_simple_chain(llm, prompt)
+        if chain:
+            result = chain.run(text=text)
+            return result
+        else:
+            return f"Analysis chain could not be created. Type: {analysis_type}"
+    except Exception as e:
+        return f"Error during AI analysis: {str(e)}"
 
-RELEVANT CONTEXT FOUND:
-{context[:300]}{'...' if len(context) > 300 else ''}
-
-ENHANCED SCRIPT:
-{script}
-
-(Note: Full LLM integration will be added when API keys are configured)
-"""
-        
-        status_message = f'<div class="status-success">✅ Enhanced with {enhancement_type} style using relevant context from knowledge base</div>'
-        return enhanced_script, status_message
+def enhance_text_with_context(text: str, enhancement_type: str = "general") -> str:
+    """Enhance text with AI if available."""
+    llm = get_openai_client()
     
-    def analyze_character_consistency(self, script: str) -> str:
-        """Analyze script for character consistency."""
-        # Search for character-related content
-        results = rag_service.search(script, k=3, content_type="character")
-        
-        if not results:
-            return "No character information found in knowledge base."
-        
-        analysis = "CHARACTER CONSISTENCY ANALYSIS:\n\n"
-        for result in results:
-            char_name = result['metadata'].get('title', 'Unknown Character')
-            analysis += f"• {char_name}: Found in knowledge base\n"
-            analysis += f"  Context: {result['content'][:100]}...\n\n"
-        
-        return analysis
+    if not llm:
+        return text  # Return original text if AI not available
     
-    def suggest_story_elements(self, script: str) -> str:
-        """Suggest relevant story elements for the script."""
-        # Search across all content types
-        story_results = rag_service.search(script, k=2, content_type="story")
-        world_results = rag_service.search(script, k=2, content_type="world_element")
+    try:
+        if enhancement_type == "dialogue":
+            prompt = "Enhance the dialogue in the following text to make it more natural and engaging:\n\n{text}"
+        elif enhancement_type == "description":
+            prompt = "Enhance the descriptions in the following text to be more vivid and immersive:\n\n{text}"
+        elif enhancement_type == "pacing":
+            prompt = "Improve the pacing and flow of the following text:\n\n{text}"
+        else:
+            prompt = "Improve and enhance the following text:\n\n{text}"
         
-        suggestions = "STORY ELEMENT SUGGESTIONS:\n\n"
-        
-        if story_results:
-            suggestions += "Related Stories:\n"
-            for result in story_results:
-                title = result['metadata'].get('title', 'Unknown')
-                suggestions += f"• {title}\n"
-        
-        if world_results:
-            suggestions += "\nRelevant World Elements:\n"
-            for result in world_results:
-                title = result['metadata'].get('title', 'Unknown')
-                elem_type = result['metadata'].get('content_type', 'element')
-                suggestions += f"• {title} ({elem_type})\n"
-        
-        if not story_results and not world_results:
-            suggestions += "No relevant story elements found."
-        
-        return suggestions
-
-
-# Global enhancer instance
-context_enhancer = ContextAwareEnhancer()
+        chain = create_simple_chain(llm, prompt)
+        if chain:
+            result = chain.run(text=text)
+            return result
+        else:
+            return text
+    except Exception as e:
+        print(f"Error during text enhancement: {str(e)}")
+        return text
