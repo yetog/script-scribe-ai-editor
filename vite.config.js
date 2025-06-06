@@ -1,13 +1,13 @@
 
 import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  // Minimal Vite config for compatibility
-  // The actual app runs on Python Gradio
+  plugins: [react()],
+  server: {
+    port: 8080,
+  },
   build: {
     outDir: 'dist',
-  },
-  server: {
-    port: 3000,
   },
 })
