@@ -24,129 +24,324 @@ from knowledge_assistant import knowledge_assistant
 current_project_id = None
 
 
-def create_story_intelligence_interface():
-    """Create the story intelligence interface components."""
+def create_scripts_interface():
+    """Create the main scripts interface with better organization."""
     
-    with gr.Column():
-        # Knowledge Assistant
-        gr.HTML(get_section_header('🤖 Knowledge Assistant'))
-        with gr.Group():
-            assistant_query = gr.Textbox(
-                label="Ask your Knowledge Assistant", 
-                placeholder="Try: !search dragons, !characters, !stories, or ask any question about your stories...",
-                lines=2
-            )
-            assistant_btn = gr.Button("🔍 Query Assistant", elem_classes=["primary-button"])
-            assistant_response = gr.HTML(visible=False)
-        
-        # Enhanced AI Tools
-        gr.HTML(get_section_header('🎯 Context-Aware AI Tools'))
-        with gr.Group():
-            ai_analysis_text = gr.Textbox(
-                label="Text to Analyze", 
-                placeholder="Paste your script text here for context-aware analysis...",
-                lines=4
-            )
-            with gr.Row():
-                consistency_btn = gr.Button("✅ Check Character Consistency", elem_classes=["secondary-button"])
-                suggest_btn = gr.Button("💡 Suggest Story Elements", elem_classes=["secondary-button"])
-                context_enhance_btn = gr.Button("🎭 Context-Aware Enhancement", elem_classes=["primary-button"])
+    with gr.Row():
+        # Left Sidebar - Organized with Accordions
+        with gr.Column(scale=1, min_width=320, elem_classes=["sidebar-column"]):
             
-            context_enhancement_type = gr.Dropdown(
-                choices=["character_consistent", "plot_coherent", "dramatic", "romantic"],
-                label="Enhancement Type",
-                value="character_consistent"
+            # Project Management - Always Visible
+            gr.HTML(get_section_header('📁 Project Workspace'))
+            with gr.Group():
+                new_project_name = gr.Textbox(
+                    label="New Project", 
+                    placeholder="Enter project name...",
+                    scale=2
+                )
+                with gr.Row():
+                    create_btn = gr.Button("➕ Create", elem_classes=["primary-button"], scale=1)
+                create_status = gr.HTML(visible=False)
+            
+            project_dropdown = gr.Dropdown(
+                label="Select Project",
+                container=False
             )
-            ai_analysis_output = gr.HTML(visible=False)
+            
+            # Quick Actions - Collapsible
+            with gr.Accordion("⚡ Quick Actions", open=True):
+                with gr.Row():
+                    save_btn = gr.Button("💾 Save", elem_classes=["secondary-button"])
+                    tts_btn = gr.Button("🔊 Play", elem_classes=["primary-button"])
+                save_status = gr.HTML(visible=False)
+                tts_status = gr.HTML(visible=False)
+            
+            # Project Notes - Collapsible
+            with gr.Accordion("📝 Notes", open=False):
+                notes_textbox = gr.Textbox(
+                    label="Project Notes",
+                    placeholder="Add your notes here...",
+                    lines=4,
+                    container=False
+                )
+            
+            # Advanced Tools - Collapsible
+            with gr.Accordion("🛠️ Advanced Tools", open=False):
+                # OCR Section
+                gr.HTML('<div class="tool-section">📷 Extract Text from Image</div>')
+                image_input = gr.Image(type="filepath", label="Upload Image", height=150)
+                ocr_btn = gr.Button("Extract Text", elem_classes=["secondary-button"])
+                ocr_status = gr.HTML(visible=False)
+                
+                # AI Enhancement
+                gr.HTML('<div class="tool-section">🤖 AI Enhancement</div>')
+                enhancement_type = gr.Dropdown(
+                    choices=["dramatic", "romantic", "professional", "casual"],
+                    label="Style",
+                    value="dramatic",
+                    container=False
+                )
+                enhance_btn = gr.Button("✨ Enhance", elem_classes=["primary-button"])
+                enhance_status = gr.HTML(visible=False)
+                
+                # Export
+                gr.HTML('<div class="tool-section">📤 Export</div>')
+                export_type = gr.Dropdown(
+                    choices=["text", "audio"],
+                    label="Type",
+                    value="text",
+                    container=False
+                )
+                export_btn = gr.Button("📥 Export", elem_classes=["secondary-button"])
+                export_file = gr.File(label="Download", visible=False)
+                export_status = gr.HTML(visible=False)
+            
+            # Settings - Collapsible
+            with gr.Accordion("⚙️ Settings", open=False):
+                dyslexic_mode = gr.Checkbox(label="Dyslexic-friendly font", value=False)
+                voice_speed = gr.Slider(0.5, 2.0, value=1.0, step=0.1, label="Voice Speed")
+                voice_volume = gr.Slider(0.1, 1.0, value=1.0, step=0.1, label="Voice Volume")
         
-        # Search functionality
-        gr.HTML(get_section_header('🔍 Search Knowledge Base'))
-        with gr.Row():
-            search_input = gr.Textbox(label="Search", placeholder="Search stories, characters, world...")
-            search_btn = gr.Button("🔍 Search", elem_classes=["primary-button"])
-        search_results = gr.HTML(visible=False)
-        
-        # Story Management
-        gr.HTML(get_section_header('📚 Stories'))
-        with gr.Group():
-            new_story_title = gr.Textbox(label="Story Title", placeholder="Enter story title...")
-            new_story_desc = gr.Textbox(label="Description", placeholder="Brief description...", lines=2)
-            create_story_btn = gr.Button("📖 Create Story", elem_classes=["primary-button"])
-            story_status = gr.HTML(visible=False)
-        
-        story_dropdown = gr.Dropdown(label="Select Story", choices=[])
-        stories_display = gr.HTML()
-        
-        # Character Management
-        gr.HTML(get_section_header('👥 Characters'))
-        with gr.Group():
-            new_char_name = gr.Textbox(label="Character Name", placeholder="Enter character name...")
-            new_char_desc = gr.Textbox(label="Description", placeholder="Character description...", lines=2)
-            create_char_btn = gr.Button("👤 Create Character", elem_classes=["primary-button"])
-            char_status = gr.HTML(visible=False)
-        
-        character_dropdown = gr.Dropdown(label="Select Character", choices=[])
-        characters_display = gr.HTML()
-        
-        # World Building
-        gr.HTML(get_section_header('🌍 World Elements'))
-        with gr.Group():
-            new_world_name = gr.Textbox(label="Element Name", placeholder="Enter element name...")
-            world_type = gr.Dropdown(
-                choices=["location", "organization", "concept", "item"],
-                label="Type",
-                value="location"
+        # Main Editor Panel
+        with gr.Column(scale=2):
+            # Status Bar
+            with gr.Row():
+                word_count_display = gr.HTML('<div class="word-count">📊 Words: 0</div>')
+                auto_save_status = gr.HTML('<div class="auto-save">💾 Saved</div>')
+            
+            # Script Editor
+            script_textbox = gr.Textbox(
+                label="Script Editor",
+                placeholder="Start writing your script here...\n\nTip: Your content will be automatically indexed for the Knowledge Assistant.",
+                lines=20,
+                max_lines=30,
+                container=False
             )
-            new_world_desc = gr.Textbox(label="Description", placeholder="Element description...", lines=2)
-            create_world_btn = gr.Button("🏛️ Create Element", elem_classes=["primary-button"])
-            world_status = gr.HTML(visible=False)
+            
+            # Audio Output
+            audio_output = gr.Audio(label="Generated Audio", visible=False)
+    
+    return {
+        'new_project_name': new_project_name,
+        'create_btn': create_btn,
+        'create_status': create_status,
+        'project_dropdown': project_dropdown,
+        'save_btn': save_btn,
+        'tts_btn': tts_btn,
+        'save_status': save_status,
+        'tts_status': tts_status,
+        'notes_textbox': notes_textbox,
+        'image_input': image_input,
+        'ocr_btn': ocr_btn,
+        'ocr_status': ocr_status,
+        'enhancement_type': enhancement_type,
+        'enhance_btn': enhance_btn,
+        'enhance_status': enhance_status,
+        'export_type': export_type,
+        'export_btn': export_btn,
+        'export_file': export_file,
+        'export_status': export_status,
+        'dyslexic_mode': dyslexic_mode,
+        'voice_speed': voice_speed,
+        'voice_volume': voice_volume,
+        'word_count_display': word_count_display,
+        'auto_save_status': auto_save_status,
+        'script_textbox': script_textbox,
+        'audio_output': audio_output
+    }
+
+
+def create_knowledge_tab():
+    """Knowledge Assistant and Search."""
+    with gr.Column():
+        gr.HTML(get_section_header('🤖 Knowledge Assistant'))
         
-        world_dropdown = gr.Dropdown(label="Select World Element", choices=[])
-        world_display = gr.HTML()
+        assistant_query = gr.Textbox(
+            label="Ask your Knowledge Assistant", 
+            placeholder="Try: !search dragons, !characters, !stories, or ask any question...",
+            lines=2
+        )
+        assistant_btn = gr.Button("🔍 Query Assistant", elem_classes=["primary-button"])
+        assistant_response = gr.HTML(visible=False)
+        
+        # Advanced Search
+        with gr.Accordion("🔍 Advanced Search", open=False):
+            search_input = gr.Textbox(label="Search Query", placeholder="Search stories, characters, world...")
+            search_btn = gr.Button("🔍 Search", elem_classes=["secondary-button"])
+            search_results = gr.HTML(visible=False)
         
         # Knowledge Base Management
-        gr.HTML(get_section_header('⚙️ Knowledge Base Management'))
-        with gr.Group():
-            rebuild_btn = gr.Button("🔄 Rebuild Knowledge Index", elem_classes=["secondary-button"])
+        with gr.Accordion("⚙️ Knowledge Base", open=False):
+            rebuild_btn = gr.Button("🔄 Rebuild Index", elem_classes=["secondary-button"])
             rebuild_status = gr.HTML(visible=False)
     
     return {
         'assistant_query': assistant_query,
         'assistant_btn': assistant_btn,
         'assistant_response': assistant_response,
-        'ai_analysis_text': ai_analysis_text,
-        'consistency_btn': consistency_btn,
-        'suggest_btn': suggest_btn,
-        'context_enhance_btn': context_enhance_btn,
-        'context_enhancement_type': context_enhancement_type,
-        'ai_analysis_output': ai_analysis_output,
         'search_input': search_input,
         'search_btn': search_btn,
         'search_results': search_results,
+        'rebuild_btn': rebuild_btn,
+        'rebuild_status': rebuild_status
+    }
+
+
+def create_stories_tab():
+    """Stories management and display."""
+    with gr.Column():
+        # Create New Story
+        with gr.Group():
+            gr.HTML('<div class="create-header">📖 Create New Story</div>')
+            with gr.Row():
+                new_story_title = gr.Textbox(label="Title", placeholder="Story title...", scale=2)
+                create_story_btn = gr.Button("➕ Create", elem_classes=["primary-button"], scale=1)
+            new_story_desc = gr.Textbox(label="Description", placeholder="Brief description...", lines=2)
+            story_status = gr.HTML(visible=False)
+        
+        # Stories Display
+        story_dropdown = gr.Dropdown(label="Select Story", choices=[])
+        stories_display = gr.HTML()
+    
+    return {
         'new_story_title': new_story_title,
         'new_story_desc': new_story_desc,
         'create_story_btn': create_story_btn,
         'story_status': story_status,
         'story_dropdown': story_dropdown,
-        'stories_display': stories_display,
+        'stories_display': stories_display
+    }
+
+
+def create_characters_tab():
+    """Characters management and display."""
+    with gr.Column():
+        # Create New Character
+        with gr.Group():
+            gr.HTML('<div class="create-header">👤 Create New Character</div>')
+            with gr.Row():
+                new_char_name = gr.Textbox(label="Name", placeholder="Character name...", scale=2)
+                create_char_btn = gr.Button("➕ Create", elem_classes=["primary-button"], scale=1)
+            new_char_desc = gr.Textbox(label="Description", placeholder="Character description...", lines=2)
+            char_status = gr.HTML(visible=False)
+        
+        # Characters Display
+        character_dropdown = gr.Dropdown(label="Select Character", choices=[])
+        characters_display = gr.HTML()
+    
+    return {
         'new_char_name': new_char_name,
         'new_char_desc': new_char_desc,
         'create_char_btn': create_char_btn,
         'char_status': char_status,
         'character_dropdown': character_dropdown,
-        'characters_display': characters_display,
+        'characters_display': characters_display
+    }
+
+
+def create_world_tab():
+    """World elements management and display."""
+    with gr.Column():
+        # Create New World Element
+        with gr.Group():
+            gr.HTML('<div class="create-header">🌍 Create World Element</div>')
+            with gr.Row():
+                new_world_name = gr.Textbox(label="Name", placeholder="Element name...", scale=2)
+                create_world_btn = gr.Button("➕ Create", elem_classes=["primary-button"], scale=1)
+            with gr.Row():
+                world_type = gr.Dropdown(
+                    choices=["location", "organization", "concept", "item"],
+                    label="Type",
+                    value="location",
+                    scale=1
+                )
+            new_world_desc = gr.Textbox(label="Description", placeholder="Element description...", lines=2)
+            world_status = gr.HTML(visible=False)
+        
+        # World Elements Display
+        world_dropdown = gr.Dropdown(label="Select Element", choices=[])
+        world_display = gr.HTML()
+    
+    return {
         'new_world_name': new_world_name,
         'world_type': world_type,
         'new_world_desc': new_world_desc,
         'create_world_btn': create_world_btn,
         'world_status': world_status,
         'world_dropdown': world_dropdown,
-        'world_display': world_display,
-        'rebuild_btn': rebuild_btn,
-        'rebuild_status': rebuild_status
+        'world_display': world_display
     }
 
 
+def create_ai_tools_tab():
+    """AI analysis and enhancement tools."""
+    with gr.Column():
+        gr.HTML(get_section_header('🎯 Context-Aware AI Tools'))
+        
+        ai_analysis_text = gr.Textbox(
+            label="Text to Analyze", 
+            placeholder="Paste your script text here for AI analysis and enhancement...",
+            lines=6
+        )
+        
+        with gr.Row():
+            consistency_btn = gr.Button("✅ Check Consistency", elem_classes=["secondary-button"])
+            suggest_btn = gr.Button("💡 Suggest Elements", elem_classes=["secondary-button"])
+        
+        with gr.Row():
+            context_enhancement_type = gr.Dropdown(
+                choices=["character_consistent", "plot_coherent", "dramatic", "romantic"],
+                label="Enhancement Type",
+                value="character_consistent",
+                scale=2
+            )
+            context_enhance_btn = gr.Button("🎭 Enhance with Context", elem_classes=["primary-button"], scale=1)
+        
+        ai_analysis_output = gr.HTML(visible=False)
+    
+    return {
+        'ai_analysis_text': ai_analysis_text,
+        'consistency_btn': consistency_btn,
+        'suggest_btn': suggest_btn,
+        'context_enhancement_type': context_enhancement_type,
+        'context_enhance_btn': context_enhance_btn,
+        'ai_analysis_output': ai_analysis_output
+    }
+
+
+def create_story_intelligence_interface():
+    """Create the redesigned story intelligence interface."""
+    
+    with gr.Column():
+        # Main Tabs for Story Intelligence
+        with gr.Tabs():
+            with gr.TabItem("🤖 Knowledge", elem_id="knowledge-tab"):
+                knowledge_components = create_knowledge_tab()
+            
+            with gr.TabItem("📚 Stories", elem_id="stories-tab"):
+                stories_components = create_stories_tab()
+            
+            with gr.TabItem("👥 Characters", elem_id="characters-tab"):
+                characters_components = create_characters_tab()
+            
+            with gr.TabItem("🌍 World", elem_id="world-tab"):
+                world_components = create_world_tab()
+            
+            with gr.TabItem("🎯 AI Tools", elem_id="ai-tools-tab"):
+                ai_tools_components = create_ai_tools_tab()
+    
+    # Combine all components
+    all_components = {}
+    all_components.update(knowledge_components)
+    all_components.update(stories_components)
+    all_components.update(characters_components)
+    all_components.update(world_components)
+    all_components.update(ai_tools_components)
+    
+    return all_components
+
+
+# Helper functions for event handlers
 def query_knowledge_assistant(query: str) -> tuple[str, any]:
     """Process knowledge assistant queries."""
     if not query.strip():
@@ -207,15 +402,17 @@ def display_stories():
     """Display all stories in a formatted way."""
     stories = get_all_stories()
     if not stories:
-        return "<p>No stories created yet.</p>"
+        return "<div class='empty-state'>📚 No stories created yet. Create your first story above!</div>"
     
-    html = "<div class='stories-grid'>"
+    html = "<div class='content-grid'>"
     for story in stories:
         html += f"""
-        <div class='story-card'>
-            <h3>{story['title']}</h3>
-            <p>{story['description'][:100]}{'...' if len(story['description']) > 100 else ''}</p>
-            <small>Created: {story['created_at'][:10]}</small>
+        <div class='content-card story-card'>
+            <div class='card-header'>
+                <h3>📖 {story['title']}</h3>
+                <span class='card-date'>{story['created_at'][:10]}</span>
+            </div>
+            <p class='card-description'>{story['description'][:100]}{'...' if len(story['description']) > 100 else ''}</p>
         </div>
         """
     html += "</div>"
@@ -226,15 +423,17 @@ def display_characters():
     """Display all characters in a formatted way."""
     characters = get_all_characters()
     if not characters:
-        return "<p>No characters created yet.</p>"
+        return "<div class='empty-state'>👥 No characters created yet. Create your first character above!</div>"
     
-    html = "<div class='characters-grid'>"
+    html = "<div class='content-grid'>"
     for char in characters:
         html += f"""
-        <div class='character-card'>
-            <h3>{char['name']}</h3>
-            <p>{char['description'][:100]}{'...' if len(char['description']) > 100 else ''}</p>
-            <small>Created: {char['created_at'][:10]}</small>
+        <div class='content-card character-card'>
+            <div class='card-header'>
+                <h3>👤 {char['name']}</h3>
+                <span class='card-date'>{char['created_at'][:10]}</span>
+            </div>
+            <p class='card-description'>{char['description'][:100]}{'...' if len(char['description']) > 100 else ''}</p>
         </div>
         """
     html += "</div>"
@@ -245,15 +444,17 @@ def display_world_elements():
     """Display all world elements in a formatted way."""
     elements = get_all_world_elements()
     if not elements:
-        return "<p>No world elements created yet.</p>"
+        return "<div class='empty-state'>🌍 No world elements created yet. Create your first element above!</div>"
     
-    html = "<div class='world-grid'>"
+    html = "<div class='content-grid'>"
     for elem in elements:
         html += f"""
-        <div class='world-card'>
-            <h3>{elem['name']} <span class='type-badge'>{elem['type']}</span></h3>
-            <p>{elem['description'][:100]}{'...' if len(elem['description']) > 100 else ''}</p>
-            <small>Created: {elem['created_at'][:10]}</small>
+        <div class='content-card world-card'>
+            <div class='card-header'>
+                <h3>🌍 {elem['name']} <span class='type-badge'>{elem['type']}</span></h3>
+                <span class='card-date'>{elem['created_at'][:10]}</span>
+            </div>
+            <p class='card-description'>{elem['description'][:100]}{'...' if len(elem['description']) > 100 else ''}</p>
         </div>
         """
     html += "</div>"
@@ -267,22 +468,22 @@ def perform_search(query):
     
     results = search_content(query)
     
-    html = f"<h4>Search Results for: '{query}'</h4>"
+    html = f"<div class='search-results'><h4>Search Results for: '{query}'</h4>"
     
     if results['stories']:
-        html += "<h5>Stories:</h5><ul>"
+        html += "<h5>📚 Stories:</h5><ul>"
         for story in results['stories']:
             html += f"<li><strong>{story['title']}</strong> - {story['description'][:50]}...</li>"
         html += "</ul>"
     
     if results['characters']:
-        html += "<h5>Characters:</h5><ul>"
+        html += "<h5>👥 Characters:</h5><ul>"
         for char in results['characters']:
             html += f"<li><strong>{char['name']}</strong> - {char['description'][:50]}...</li>"
         html += "</ul>"
     
     if results['world_elements']:
-        html += "<h5>World Elements:</h5><ul>"
+        html += "<h5>🌍 World Elements:</h5><ul>"
         for elem in results['world_elements']:
             html += f"<li><strong>{elem['name']}</strong> ({elem['type']}) - {elem['description'][:50]}...</li>"
         html += "</ul>"
@@ -290,11 +491,12 @@ def perform_search(query):
     if not any(results.values()):
         html += "<p>No results found.</p>"
     
+    html += "</div>"
     return gr.update(value=html, visible=True)
 
 
 def create_interface():
-    """Create the main Gradio interface."""
+    """Create the main Gradio interface with improved UI."""
     
     # Load initial projects
     data = load_projects()
@@ -306,193 +508,98 @@ def create_interface():
         css=CUSTOM_CSS
     ) as app:
         
-        # Header with ScriptVoice branding
+        # Header
         gr.HTML(get_header_html())
         
-        # Main tabbed interface
-        with gr.Tabs():
-            # Scripts Tab (Original functionality)
-            with gr.TabItem("📝 Scripts"):
-                with gr.Row():
-                    # Left Sidebar
-                    with gr.Column(scale=1, min_width=300, elem_classes=["sidebar-column"]):
-                        gr.HTML(get_section_header('📁 Projects'))
-                        
-                        # New Project Section
-                        with gr.Group():
-                            new_project_name = gr.Textbox(label="New Project Name", placeholder="Enter project name...")
-                            create_btn = gr.Button("➕ Create Project", elem_classes=["primary-button"])
-                            create_status = gr.HTML(visible=False)
-                        
-                        # Project Selection
-                        project_dropdown = gr.Dropdown(
-                            choices=project_choices,
-                            label="Select Project",
-                            value=list(data["projects"].keys())[0] if data["projects"] else None
-                        )
-                        
-                        # Notes Section
-                        gr.HTML(get_section_header('📝 Notes'))
-                        notes_textbox = gr.Textbox(
-                            label="Project Notes",
-                            placeholder="Add your notes here...",
-                            lines=5,
-                            max_lines=10
-                        )
-                        
-                        # Settings Section
-                        gr.HTML(get_section_header('⚙️ Settings'))
-                        with gr.Group():
-                            dyslexic_mode = gr.Checkbox(label="Dyslexic-friendly font", value=False)
-                            voice_speed = gr.Slider(0.5, 2.0, value=1.0, step=0.1, label="Voice Speed")
-                            voice_volume = gr.Slider(0.1, 1.0, value=1.0, step=0.1, label="Voice Volume")
-                    
-                    # Main Editor Panel
-                    with gr.Column(scale=2):
-                        # Word Count Display
-                        word_count_display = gr.HTML('<div class="word-count-highlight">📊 Word Count: 0</div>')
-                        
-                        # Script Editor
-                        script_textbox = gr.Textbox(
-                            label="Script Editor",
-                            placeholder="Start writing your script here...",
-                            lines=15,
-                            max_lines=25
-                        )
-                        
-                        # Control Buttons Row
-                        with gr.Row():
-                            save_btn = gr.Button("💾 Save", elem_classes=["secondary-button"])
-                            tts_btn = gr.Button("🔊 Play TTS", elem_classes=["primary-button"])
-                            save_status = gr.HTML(visible=False)
-                        
-                        # TTS Audio Output
-                        audio_output = gr.Audio(label="Generated Audio")
-                        tts_status = gr.HTML(visible=False)
-                        
-                        # OCR Section
-                        with gr.Group():
-                            gr.HTML(get_section_header('📷 Extract Text from Image'))
-                            with gr.Row():
-                                image_input = gr.Image(type="filepath", label="Upload Image")
-                                ocr_btn = gr.Button("Extract Text", elem_classes=["secondary-button"])
-                            ocr_status = gr.HTML(visible=False)
-                        
-                        # AI Enhancement Section
-                        with gr.Group():
-                            gr.HTML(get_section_header('🤖 AI Script Enhancement'))
-                            with gr.Row():
-                                enhancement_type = gr.Dropdown(
-                                    choices=["dramatic", "romantic", "professional", "casual"],
-                                    label="Enhancement Style",
-                                    value="dramatic"
-                                )
-                                enhance_btn = gr.Button("✨ Enhance Script", elem_classes=["primary-button"])
-                            enhance_status = gr.HTML(visible=False)
-                        
-                        # Export Section
-                        with gr.Group():
-                            gr.HTML(get_section_header('📤 Export'))
-                            with gr.Row():
-                                export_type = gr.Dropdown(
-                                    choices=["text", "audio"],
-                                    label="Export Type",
-                                    value="text"
-                                )
-                                export_btn = gr.Button("📥 Export", elem_classes=["secondary-button"])
-                            export_file = gr.File(label="Download")
-                            export_status = gr.HTML(visible=False)
+        # Main interface with improved tabs
+        with gr.Tabs() as main_tabs:
+            # Scripts Tab (Redesigned)
+            with gr.TabItem("📝 Scripts", elem_id="scripts-tab"):
+                scripts_components = create_scripts_interface()
+                
+                # Set initial project choices
+                scripts_components['project_dropdown'].choices = project_choices
+                if project_choices:
+                    scripts_components['project_dropdown'].value = project_choices[0][1]
             
-            # Story Intelligence Tab (Enhanced with RAG)
-            with gr.TabItem("📚 Story Intelligence"):
+            # Story Intelligence Tab (Redesigned)
+            with gr.TabItem("📚 Story Intelligence", elem_id="intelligence-tab"):
                 story_components = create_story_intelligence_interface()
         
         # Event Handlers for Scripts Tab
-        
-        # Create new project
-        create_btn.click(
+        scripts_components['create_btn'].click(
             fn=create_new_project,
-            inputs=[new_project_name],
-            outputs=[create_status, project_dropdown]
+            inputs=[scripts_components['new_project_name']],
+            outputs=[scripts_components['create_status'], scripts_components['project_dropdown']]
         ).then(
             lambda: ("", gr.update(visible=True)),
-            outputs=[new_project_name, create_status]
+            outputs=[scripts_components['new_project_name'], scripts_components['create_status']]
         )
         
-        # Load project when selected
-        project_dropdown.change(
+        scripts_components['project_dropdown'].change(
             fn=load_project,
-            inputs=[project_dropdown],
-            outputs=[script_textbox, notes_textbox, word_count_display]
+            inputs=[scripts_components['project_dropdown']],
+            outputs=[scripts_components['script_textbox'], scripts_components['notes_textbox'], scripts_components['word_count_display']]
         )
         
-        # Update word count as user types
-        script_textbox.change(
+        scripts_components['script_textbox'].change(
             fn=update_word_count,
-            inputs=[script_textbox],
-            outputs=[word_count_display]
+            inputs=[scripts_components['script_textbox']],
+            outputs=[scripts_components['word_count_display']]
         )
         
-        # Save script content
-        save_btn.click(
+        scripts_components['save_btn'].click(
             fn=save_script_content,
-            inputs=[project_dropdown, script_textbox, notes_textbox],
-            outputs=[save_status]
+            inputs=[scripts_components['project_dropdown'], scripts_components['script_textbox'], scripts_components['notes_textbox']],
+            outputs=[scripts_components['save_status']]
         ).then(
             lambda: gr.update(visible=True),
-            outputs=[save_status]
+            outputs=[scripts_components['save_status']]
         )
         
-        # Generate TTS
-        tts_btn.click(
+        scripts_components['tts_btn'].click(
             fn=generate_tts,
-            inputs=[script_textbox, voice_speed],
-            outputs=[audio_output, tts_status]
+            inputs=[scripts_components['script_textbox'], scripts_components['voice_speed']],
+            outputs=[scripts_components['audio_output'], scripts_components['tts_status']]
         ).then(
-            lambda: gr.update(visible=True),
-            outputs=[tts_status]
+            lambda: (gr.update(visible=True), gr.update(visible=True)),
+            outputs=[scripts_components['audio_output'], scripts_components['tts_status']]
         )
         
-        # OCR text extraction
-        ocr_btn.click(
+        scripts_components['ocr_btn'].click(
             fn=extract_text_from_image,
-            inputs=[image_input],
-            outputs=[script_textbox, ocr_status]
+            inputs=[scripts_components['image_input']],
+            outputs=[scripts_components['script_textbox'], scripts_components['ocr_status']]
         ).then(
             lambda: gr.update(visible=True),
-            outputs=[ocr_status]
+            outputs=[scripts_components['ocr_status']]
         )
         
-        # AI Enhancement
-        enhance_btn.click(
+        scripts_components['enhance_btn'].click(
             fn=enhance_script_placeholder,
-            inputs=[script_textbox, enhancement_type],
-            outputs=[script_textbox, enhance_status]
+            inputs=[scripts_components['script_textbox'], scripts_components['enhancement_type']],
+            outputs=[scripts_components['script_textbox'], scripts_components['enhance_status']]
         ).then(
             lambda: gr.update(visible=True),
-            outputs=[enhance_status]
+            outputs=[scripts_components['enhance_status']]
         )
         
-        # Export functionality
-        export_btn.click(
+        scripts_components['export_btn'].click(
             fn=export_project,
-            inputs=[project_dropdown, export_type],
-            outputs=[export_file, export_status]
+            inputs=[scripts_components['project_dropdown'], scripts_components['export_type']],
+            outputs=[scripts_components['export_file'], scripts_components['export_status']]
         ).then(
-            lambda: gr.update(visible=True),
-            outputs=[export_status]
+            lambda: (gr.update(visible=True), gr.update(visible=True)),
+            outputs=[scripts_components['export_file'], scripts_components['export_status']]
         )
         
         # Event Handlers for Story Intelligence Tab
-        
-        # Knowledge Assistant
         story_components['assistant_btn'].click(
             fn=query_knowledge_assistant,
             inputs=[story_components['assistant_query']],
             outputs=[story_components['assistant_response'], story_components['assistant_response']]
         )
         
-        # AI Analysis Tools
         story_components['consistency_btn'].click(
             fn=analyze_consistency,
             inputs=[story_components['ai_analysis_text']],
@@ -511,13 +618,11 @@ def create_interface():
             outputs=[story_components['ai_analysis_output'], story_components['ai_analysis_output']]
         )
         
-        # Knowledge Base Management
         story_components['rebuild_btn'].click(
             fn=rebuild_knowledge_index,
             outputs=[story_components['rebuild_status'], story_components['rebuild_status']]
         )
         
-        # Create story
         story_components['create_story_btn'].click(
             fn=create_story,
             inputs=[story_components['new_story_title'], story_components['new_story_desc']],
@@ -530,7 +635,6 @@ def create_interface():
             outputs=[story_components['stories_display']]
         )
         
-        # Create character
         story_components['create_char_btn'].click(
             fn=create_character,
             inputs=[story_components['new_char_name'], story_components['new_char_desc']],
@@ -543,7 +647,6 @@ def create_interface():
             outputs=[story_components['characters_display']]
         )
         
-        # Create world element
         story_components['create_world_btn'].click(
             fn=create_world_element,
             inputs=[story_components['new_world_name'], story_components['world_type'], story_components['new_world_desc']],
@@ -556,14 +659,13 @@ def create_interface():
             outputs=[story_components['world_display']]
         )
         
-        # Search functionality
         story_components['search_btn'].click(
             fn=perform_search,
             inputs=[story_components['search_input']],
             outputs=[story_components['search_results']]
         )
         
-        # Load initial story intelligence data
+        # Load initial data
         app.load(
             fn=display_stories,
             outputs=[story_components['stories_display']]
