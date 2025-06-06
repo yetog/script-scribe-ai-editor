@@ -17,11 +17,21 @@
    # macOS: brew install tesseract
    # Windows: Download from GitHub releases
    
+   # Set up environment variables (RECOMMENDED)
+   export IONOS_API_TOKEN="your_ionos_token"
+   export OPENAI_API_KEY="your_openai_key"  # Optional fallback
+   export ELEVENLABS_API_KEY="your_elevenlabs_key"  # For voice features
+   
    # Run the application
    python main.py
    ```
 
-2. **Access the Application**
+2. **Security Note**
+   - NEVER commit API tokens to version control
+   - Use environment variables for all API keys
+   - The app will warn you if tokens are not configured
+
+3. **Access the Application**
    - Main Gradio App: http://localhost:7860
    - React Landing Page: http://localhost:8080 (if running separately)
 
@@ -29,14 +39,24 @@
 
 **IONOS AI API Setup (Required for Image Generation)**
 1. Get your IONOS AI Model Hub API token
-2. Set in config.py or environment variable:
-   ```python
-   IONOS_API_TOKEN = "your_token_here"
+2. Set as environment variable:
+   ```bash
+   export IONOS_API_TOKEN="your_token_here"
    ```
 
 **OpenAI API Setup (Optional - Fallback)**
 1. Get OpenAI API key from https://platform.openai.com
-2. Set OPENAI_API_KEY in config.py or environment
+2. Set as environment variable:
+   ```bash
+   export OPENAI_API_KEY="your_key_here"
+   ```
+
+**ElevenLabs API Setup (For Advanced Voice Features)**
+1. Get ElevenLabs API key from https://elevenlabs.io
+2. Set as environment variable:
+   ```bash
+   export ELEVENLABS_API_KEY="your_key_here"
+   ```
 
 ### 📝 SCRIPTS TAB - Text-to-Speech Script Editor
 
@@ -82,31 +102,72 @@
 1. Enter title and description
 2. Click "📖 Create Story"
 3. Story appears in knowledge base
+4. Automatically indexed for semantic search
 
 **Characters**
 1. Enter name and detailed description
 2. Include personality traits, appearance
 3. Click "👤 Create Character"
+4. Character data is searchable across the platform
 
 **World Elements**
 1. Choose type: Location, Organization, Technology, Culture, etc.
 2. Enter name and description
 3. Click "🌍 Create World Element"
+4. Elements are cross-referenced automatically
 
 **Knowledge Assistant**
 1. Ask questions about your story world
 2. Get AI-powered insights and suggestions
 3. Example: "What are the main conflicts in my story?"
+4. Uses hybrid search (text + semantic)
 
 **AI Analysis Tools**
 1. **Consistency Check**: Analyze text for plot holes
 2. **Suggest Elements**: Get recommendations for missing pieces
 3. **Context Enhancement**: Improve text with story context
 
-**Search & Discovery**
-1. Use search to find specific story elements
-2. Filter by type: stories, characters, locations
-3. Cross-reference related elements
+### 📊 DATABASE TAB - Chapter & Structure Management
+
+**Overview**
+The Database tab provides structured management of your story's chapters, acts, and scenes with advanced search and analytics.
+
+**Creating Chapters**
+1. Click "➕ Add New Chapter"
+2. Fill in chapter details:
+   - Story: Select from existing stories
+   - Act & Block Numbers: Organize structure
+   - Title: Chapter name
+   - Status: Not Started, In Progress, Complete, etc.
+   - Outline: Brief chapter summary
+   - Characters: Select involved characters
+   - Location: Chapter setting
+   - Notes: Additional information
+3. Click "💾 Save Chapter"
+
+**Chapter Management Features**
+1. **Search**: Find chapters by title, content, or notes
+2. **Filter**: By story, status, or act number
+3. **Edit**: Select chapter and click "✏️ Edit"
+4. **Delete**: Remove chapters with confirmation
+5. **Bulk Update**: Modify multiple chapters at once
+
+**Database Statistics**
+- Total chapter count
+- Progress by status (Not Started, In Progress, Complete)
+- Breakdown by story and act
+- Visual progress indicators
+
+**Advanced Search**
+- Combines text search with semantic AI search
+- Finds related content across your entire story database
+- Search by character names, locations, themes
+
+**Bulk Operations**
+1. Select multiple chapters (currently first 5 for demo)
+2. Click "🔄 Bulk Update"
+3. Apply changes to status, location, or notes
+4. Saves time when managing large projects
 
 ### 🎨 MOOD BOARD TAB - AI Image Generation
 
@@ -142,15 +203,30 @@
 - **Fantasy**: Magical, ethereal concept art
 - **Noir**: Black & white, dramatic shadows
 
+### 🔍 HYBRID SEARCH SYSTEM
+
+**How It Works**
+ScriptVoice uses a dual-search approach:
+1. **Local Text Search**: Fast keyword matching
+2. **Semantic AI Search**: Understanding context and meaning
+3. **Combined Results**: Best of both worlds
+
+**Benefits**
+- Find content even when you don't remember exact words
+- Discover related themes and connections
+- Better content recommendations
+- Improved story consistency checking
+
 ### 🎯 BEST PRACTICES
 
 **Story Development Workflow**
 1. Start with core story concept in Stories tab
 2. Create main characters with detailed descriptions
 3. Build world elements (locations, cultures, tech)
-4. Use AI assistant to analyze and improve
-5. Generate mood boards for visual inspiration
-6. Write scripts with context enhancement
+4. Structure chapters in Database tab
+5. Use AI assistant to analyze and improve
+6. Generate mood boards for visual inspiration
+7. Write scripts with context enhancement
 
 **Character Creation Tips**
 - Include physical appearance, personality traits
@@ -164,115 +240,178 @@
 - Design technology with capabilities and limits
 - Establish organizations with goals and structure
 
+**Database Organization**
+- Use consistent naming conventions
+- Fill in all chapter fields for better search
+- Regular status updates for progress tracking
+- Use notes field for important details
+
 **Image Generation Tips**
 - Be specific in prompts: "medieval castle on cliff" vs "castle"
 - Combine story elements for richer context
 - Use different styles for different needs
 - Save successful prompts for reuse
 
-### 🔍 TROUBLESHOOTING
+### 🔧 TROUBLESHOOTING
 
 **Common Issues**
 
+**"Dependencies Missing" Error**
+- Run: `pip install -r requirements.txt`
+- Check specific missing packages in startup logs
+- Install system dependencies (Tesseract OCR)
+
 **"API Token Not Configured"**
-- Check IONOS_API_TOKEN in config.py
-- Verify token is valid and not expired
-- Ensure no extra spaces in token string
+- Set environment variables properly
+- Check token validity and expiration
+- Ensure no extra spaces in token strings
+- Restart application after setting tokens
 
 **"Failed to Generate Images"**
 - Check internet connection
-- Verify API quota/credits
+- Verify IONOS API quota/credits
 - Try simpler prompts if complex ones fail
-- Check IONOS API status
+- Check IONOS API service status
+
+**"Database Connection Issues"**
+- Check chromadb_storage directory exists
+- Restart application if vector DB corrupted
+- Clear chromadb_storage folder if necessary
 
 **OCR Not Working**
-- Install Tesseract OCR properly
+- Install Tesseract OCR system package
 - Check image quality and text clarity
 - Supported formats: PNG, JPG, JPEG, GIF, BMP, TIFF
 
 **Audio Generation Issues**
 - Check internet connection (gTTS requires online)
-- Verify audio output folder exists
+- Verify audio_output folder exists
 - Try shorter text samples first
 
 **Knowledge Base Empty**
 - Create stories, characters, worlds first
-- Check projects.json file exists
+- Check projects.json file exists and is readable
 - Restart application if data not loading
+
+**Search Not Working**
+- Check if RAG service is initialized
+- Restart app to rebuild search index
+- Verify content was saved properly
 
 ### 📂 FILE STRUCTURE
 
 ```
 scriptvoice/
-├── main.py                 # Application entry point
-├── config.py              # Configuration settings
-├── requirements.txt       # Python dependencies
-├── projects.json          # Story data storage
-├── audio_output/          # Generated TTS files
-├── generated_images/      # AI-generated images
-├── mood_boards/          # Saved mood board data
-├── temp/                 # Temporary files
-└── chromadb_storage/     # Vector database
+├── main.py                    # Application entry point
+├── interface_factory.py       # Main UI factory
+├── config.py                 # Configuration settings
+├── requirements.txt          # Python dependencies
+├── projects.json             # Story data storage
+├── database_models.py        # Chapter/database models
+├── models.py                 # Core data models
+├── rag_services.py          # AI search services
+├── audio_output/            # Generated TTS files
+├── generated_images/        # AI-generated images
+├── mood_boards/            # Saved mood board data
+├── temp/                   # Temporary files
+└── chromadb_storage/       # Vector database storage
 ```
 
 ### 🚀 ADVANCED FEATURES
 
 **Vector Search**
-- Automatic indexing of story content
+- Automatic indexing of all story content
 - Semantic search across all elements
 - Find related content automatically
+- Cross-reference character interactions
 
 **Knowledge Graphs**
 - Visualize story relationships
 - Track character interactions
 - Map world connections
+- Identify plot dependencies
 
 **Batch Operations**
 - Generate multiple mood boards
 - Bulk export story elements
 - Mass character analysis
+- Chapter status updates
+
+**Data Export/Import**
+- Export projects as JSON
+- Backup story databases
+- Share story elements
+- Migrate between instances
 
 ### 💡 TIPS & TRICKS
 
 **Performance Optimization**
 - Keep story descriptions focused but detailed
 - Use consistent naming conventions
-- Regular knowledge base rebuilds
+- Regular knowledge base rebuilds for large projects
 - Clear temp files periodically
 
 **Creative Workflows**
 - Start broad, then narrow focus
 - Use mood boards for scene inspiration
 - Cross-reference character motivations
-- Build iteratively, not all at once
+- Build iteratively, test frequently
 
-### 🆘 SUPPORT
+**Security Best Practices**
+- Never commit API keys to version control
+- Use environment variables exclusively
+- Rotate API keys regularly
+- Monitor API usage and costs
+
+**Collaboration Tips**
+- Export projects.json for sharing
+- Use consistent character/location names
+- Document story rules in world elements
+- Regular backups of story data
+
+### 🆘 SUPPORT & TROUBLESHOOTING
 
 **Getting Help**
-1. Check console output for error messages
-2. Review this documentation
-3. Check GitHub issues/discussions
-4. Verify all dependencies installed correctly
+1. Check console output for detailed error messages
+2. Review this documentation thoroughly
+3. Verify all dependencies and API keys
+4. Check GitHub issues/discussions for known problems
 
 **Reporting Issues**
-- Include error messages
-- Describe steps to reproduce
-- Share relevant configuration
-- Attach logs if available
+- Include complete error messages
+- Describe exact steps to reproduce
+- Share relevant configuration (without API keys)
+- Attach logs from console output
+
+**Performance Issues**
+- Monitor system resources during heavy operations
+- Limit concurrent AI operations
+- Clear browser cache if using web interface
+- Restart application for memory cleanup
 
 ### 📈 FUTURE FEATURES
 
 **Planned Improvements**
-- Voice cloning integration
-- Advanced AI models
-- Collaborative editing
-- Cloud storage sync
+- Voice cloning integration with ElevenLabs
+- Advanced AI model options
+- Collaborative real-time editing
+- Cloud storage synchronization
 - Mobile app companion
-- Advanced analytics
+- Advanced analytics and insights
+- Custom AI model training
+- Plugin system for extensions
+
+**Community Features**
+- Story sharing marketplace
+- Character template library
+- World-building resources
+- Community challenges
 
 ---
 
-**Built with ❤️ using Gradio, Python, and IONOS AI Model Hub**
+**Built with ❤️ using Gradio, Python, IONOS AI, and ElevenLabs**
 
 Last Updated: January 2024
-Version: 1.0
+Version: 2.0
+
+**Security Notice**: Always use environment variables for API keys. Never commit sensitive credentials to version control.
