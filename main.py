@@ -3,6 +3,7 @@
 
 import os
 from app_factory import create_interface
+from config import IONOS_API_TOKEN, OPENAI_API_KEY
 
 def ensure_directories():
     """Ensure required directories exist."""
@@ -12,6 +13,25 @@ def ensure_directories():
             os.makedirs(directory)
             print(f"Created directory: {directory}")
 
+def check_ai_providers():
+    """Check and display available AI providers."""
+    print("\n🤖 AI Provider Status:")
+    
+    if IONOS_API_TOKEN:
+        print("  ✅ IONOS AI Model Hub - Available (Primary)")
+    else:
+        print("  ❌ IONOS AI Model Hub - Not configured")
+    
+    if OPENAI_API_KEY:
+        print("  ✅ OpenAI - Available (Fallback)")
+    else:
+        print("  ❌ OpenAI - Not configured")
+    
+    if not IONOS_API_TOKEN and not OPENAI_API_KEY:
+        print("  ⚠️  No AI providers configured - AI features will be limited")
+    
+    print()
+
 if __name__ == "__main__":
     print("🚀 Starting ScriptVoice - AI-Powered Story Intelligence Platform")
     print("📦 Make sure you have installed dependencies: pip install -r requirements.txt")
@@ -20,6 +40,9 @@ if __name__ == "__main__":
     
     # Ensure required directories exist
     ensure_directories()
+    
+    # Check AI provider status
+    check_ai_providers()
     
     # Create and launch the app
     try:
