@@ -341,7 +341,7 @@ def create_story_intelligence_interface():
     return all_components
 
 
-# Helper functions for event handlers
+# Helper functions for event handlers - Fixed to return strings instead of booleans
 def query_knowledge_assistant(query: str) -> tuple[str, any]:
     """Process knowledge assistant queries."""
     if not query.strip():
@@ -495,6 +495,38 @@ def perform_search(query):
     return gr.update(value=html, visible=True)
 
 
+# Enhanced TTS function that returns proper audio file
+def enhanced_generate_tts(text: str, speed: float = 1.0) -> tuple[str, str]:
+    """Enhanced TTS generation with proper file handling."""
+    if not text.strip():
+        return None, '<div class="status-error">❌ Please enter some text to convert to speech</div>'
+    
+    try:
+        audio_file, status = generate_tts(text, speed)
+        if audio_file:
+            return audio_file, '<div class="status-success">✅ Audio generated successfully. Click play to listen!</div>'
+        else:
+            return None, status
+    except Exception as e:
+        return None, f'<div class="status-error">❌ Error generating audio: {str(e)}</div>'
+
+
+# Enhanced OCR function
+def enhanced_extract_text(image_path) -> tuple[str, str]:
+    """Enhanced OCR with better error handling."""
+    if not image_path:
+        return "", '<div class="status-error">❌ Please upload an image first</div>'
+    
+    try:
+        extracted_text, status = extract_text_from_image(image_path)
+        if extracted_text:
+            return extracted_text, '<div class="status-success">✅ Text extracted successfully! Content added to editor.</div>'
+        else:
+            return "", status
+    except Exception as e:
+        return "", f'<div class="status-error">❌ Error extracting text: {str(e)}</div>'
+
+
 def create_interface():
     """Create the main Gradio interface with improved UI."""
     
@@ -526,7 +558,7 @@ def create_interface():
             with gr.TabItem("📚 Story Intelligence", elem_id="intelligence-tab"):
                 story_components = create_story_intelligence_interface()
         
-        # Event Handlers for Scripts Tab
+        # Event Handlers for Scripts Tab - Enhanced with proper error handling
         scripts_components['create_btn'].click(
             fn=create_new_project,
             inputs=[scripts_components['new_project_name']],
@@ -557,8 +589,9 @@ def create_interface():
             outputs=[scripts_components['save_status']]
         )
         
+        # Enhanced TTS with proper audio output
         scripts_components['tts_btn'].click(
-            fn=generate_tts,
+            fn=enhanced_generate_tts,
             inputs=[scripts_components['script_textbox'], scripts_components['voice_speed']],
             outputs=[scripts_components['audio_output'], scripts_components['tts_status']]
         ).then(
@@ -566,8 +599,9 @@ def create_interface():
             outputs=[scripts_components['audio_output'], scripts_components['tts_status']]
         )
         
+        # Enhanced OCR with proper text extraction
         scripts_components['ocr_btn'].click(
-            fn=extract_text_from_image,
+            fn=enhanced_extract_text,
             inputs=[scripts_components['image_input']],
             outputs=[scripts_components['script_textbox'], scripts_components['ocr_status']]
         ).then(
@@ -593,7 +627,7 @@ def create_interface():
             outputs=[scripts_components['export_file'], scripts_components['export_status']]
         )
         
-        # Event Handlers for Story Intelligence Tab
+        # Event Handlers for Story Intelligence Tab - Enhanced with proper error handling
         story_components['assistant_btn'].click(
             fn=query_knowledge_assistant,
             inputs=[story_components['assistant_query']],
