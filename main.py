@@ -24,12 +24,6 @@ def check_dependencies():
         print("  ❌ pandas - Missing (install with: pip install pandas)")
     
     try:
-        import elevenlabs
-        print("  ✅ elevenlabs - Available")
-    except ImportError:
-        print("  ❌ elevenlabs - Missing (install with: pip install elevenlabs)")
-    
-    try:
         import pytesseract
         print("  ✅ pytesseract - Available")
     except ImportError:
@@ -40,23 +34,33 @@ def check_dependencies():
         print("  ✅ chromadb - Available")
     except ImportError:
         print("  ❌ chromadb - Missing (install with: pip install chromadb)")
+    
+    # ElevenLabs is now optional
+    try:
+        import elevenlabs
+        print("  ✅ elevenlabs - Available (Optional)")
+    except ImportError:
+        print("  ℹ️  elevenlabs - Not installed (Optional - using gTTS for voice)")
 
 def check_ai_providers():
     """Check and display available AI providers."""
     print("\n🤖 AI Provider Status:")
     
-    if IONOS_API_TOKEN and IONOS_API_TOKEN != "your_token_here":
+    if IONOS_API_TOKEN and IONOS_API_TOKEN != "your_token_here" and IONOS_API_TOKEN.strip():
         print("  ✅ IONOS AI Model Hub - Available (Primary)")
     else:
-        print("  ❌ IONOS AI Model Hub - Not configured (set IONOS_API_TOKEN)")
+        print("  ❌ IONOS AI Model Hub - Not configured")
+        print("     Set environment variable: export IONOS_API_TOKEN='your_token_here'")
     
-    if OPENAI_API_KEY:
+    if OPENAI_API_KEY and OPENAI_API_KEY.strip():
         print("  ✅ OpenAI - Available (Fallback)")
     else:
-        print("  ❌ OpenAI - Not configured (set OPENAI_API_KEY)")
+        print("  ❌ OpenAI - Not configured (Optional)")
+        print("     Set environment variable: export OPENAI_API_KEY='your_key_here'")
     
-    if not IONOS_API_TOKEN and not OPENAI_API_KEY:
-        print("  ⚠️  No AI providers configured - AI features will be limited")
+    if not (IONOS_API_TOKEN and IONOS_API_TOKEN != "your_token_here" and IONOS_API_TOKEN.strip()) and not (OPENAI_API_KEY and OPENAI_API_KEY.strip()):
+        print("  ⚠️  No AI providers configured - Some AI features will be limited")
+        print("     Basic functionality (TTS, OCR, Scripts) will still work")
     
     print()
 
